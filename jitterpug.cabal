@@ -1,0 +1,32 @@
+cabal-version:       2.0
+name:                jitterpug
+version:             0.1.0.0
+synopsis:            Image reconstruction using sampling
+homepage:            https://github.com/lancelet/jitterpug
+description:         Please see the README file at https://github.com/lancelet/jitterpug/README.md
+license:             BSD3
+license-file:        LICENSE
+author:              Jonathan Merritt
+maintainer:          j.s.merritt@gmail.com
+category:            Graphics
+build-type:          Simple
+extra-source-files:  ChangeLog.md
+tested-with:         GHC == 8.2.2
+
+source-repository head
+  type:     git
+  location: git@github.com:lancelet/jitterpug.git
+                     
+library
+  default-language:    Haskell2010
+  hs-source-dirs:      src
+  exposed-modules:     Graphics.Jitterpug
+  build-depends:
+      base >=4.10 && <5
+
+executable jitterpug-docgen
+  main-is:             Main.hs
+  hs-source-dirs:      app/docgen
+  default-language:    Haskell2010
+  build-depends:
+      base >=4.10 && <5
