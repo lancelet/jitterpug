@@ -30,6 +30,15 @@ install:
 script:
 # Build the package, its tests, and its docs and run the tests
 - stack --no-terminal test --haddock --no-haddock-deps
-# Build and publish Tintin documentation
+# Build Tintin documentation
 - stack --no-terminal exec tintin -- run
-- stack --no-terminal exec tintin -- publish
+
+# Publish Tintin documentation to GitHub pages
+deploy:
+  provider: pages
+  skip-cleanup: true
+  local-dir: .stack-work/tintin/rendered
+  github-token: $GITHUB_TOKEN
+  keep-history: true
+  on:
+    branch: master
