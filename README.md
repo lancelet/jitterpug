@@ -9,6 +9,9 @@ Documentation](https://lancelet.github.io/jitterpug/) for more information.
 
 ```
 stack install tintin
+stack build
+stack exec jitterpug-docgen
 stack exec tintin -- run
+cp ./doc/*.svg .stack-work/tintin/rendered/.
 open .stack-work/tintin/rendered/index.html
 ```

@@ -34,5 +34,17 @@ executable jitterpug-docgen
   main-is:             Main.hs
   hs-source-dirs:      app/docgen
   default-language:    Haskell2010
+  other-modules:
+      Graphics.Jitterpug.Diagrams.CanonicalPixelSamples
   build-depends:
-      base >=4.10 && <5
+      jitterpug
+    , base >=4.10 && <5
+    , SVGFonts
+    , colour
+    , diagrams
+    , diagrams-lib
+    , diagrams-svg
+    , linear
+    , mwc-random
+    , primitive
+    , vector

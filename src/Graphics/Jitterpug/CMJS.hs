@@ -2,16 +2,36 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
-module Graphics.Jitterpug.CMJS where
+module Graphics.Jitterpug.CMJS (
+    -- * Functions
+    canonicalPixelSamples
+    ) where
 
 import           Control.Monad.Primitive     (PrimMonad, PrimState)
 import           Data.Vector.Generic.Mutable (MVector)
 import qualified Data.Vector.Generic.Mutable as VGM
 import           Linear.V2                   (V2)
 import qualified Linear.V2                   as V2
-import           System.Random.MWC           (Gen)
 
--- | Arrange jittered pixel samples canonically.
+
+-- | Produce jittered pixel samples canonically.
+--
+--   This process produces pixel samples in the pattern shown in
+--   Fig 1 of:
+--
+--     * Kensler, A (2013) Correlated Multi-Jittered Sampling.
+--         Pixar Technical Memo 13-01.
+--
+--   > canonicalPixelSamples rand xs n
+--
+--   This is an effectful process, run in some primitive monad @m@. The
+--   process modifies the mutable vector @xs@, filling it with sampling
+--   locations. The square root of the total number of samples, @n@, is
+--   provided as a convenience, but must match the length of the mutable
+--   vector @xs@.
+--
+--   This procedure is typically called in a tight inner loop of the
+--   sampling routine.
 canonicalPixelSamples
     :: ( PrimMonad m
        , MVector v (V2 a)
@@ -24,17 +44,19 @@ canonicalPixelSamples
 canonicalPixelSamples !rand !xs !n = do
     let nf = fromIntegral n
     loop 0 (<n) (+1) $ \j -> do
-        let jf = fromIntegral j
+        let fj = fromIntegral j
         loop 0 (<n) (+1) $ \i -> do
+            let fi = fromIntegral i
             xjit <- rand
             yjit <- rand
             VGM.unsafeWrite
                 xs
-                (i + (j * n))
+                (j * n + i)
                 (V2.V2
-                    ((fromIntegral i + xjit / nf) / nf)
-                    ((jf             + yjit / nf) / nf))
+                    ((fi + (fj + xjit) / nf) / nf)
+                    ((fj + (fi + yjit) / nf) / nf))
 {-# INLINE canonicalPixelSamples #-}
+
 
 -- | Basic for loop.
 loop

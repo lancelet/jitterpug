@@ -31,7 +31,9 @@ script:
 # Build the package, its tests, and its docs and run the tests
 - stack --no-terminal test --haddock --no-haddock-deps
 # Build Tintin documentation
+- stack --no-terminal exec jitterpug-docgen  # svg images
 - stack --no-terminal exec tintin -- run
+- cp ./doc/*.svg .stack-work/tintin/rendered/.
 
 # Publish Tintin documentation to GitHub pages
 deploy:
