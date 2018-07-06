@@ -25,7 +25,7 @@ renderCanonicalPixelSamplesDiagram
     :: FilePath  -- ^ Path of the file to write.
     -> IO ()
 renderCanonicalPixelSamplesDiagram filePath = do
-    font <- SF.lin2
+    font <- SF.loadFont "resources/KaTeX_Math-Italic.svg"
     let diagram = canonicalPixelSamplesDiagram font
     renderSVG filePath (D.dims (V2 400 400)) diagram
 
@@ -47,6 +47,8 @@ canonicalPixelSamplesDiagram font =
     , allThinLines  # D.lwG thinWidth  # D.lc thinColor
     , xAxis         # D.lwG thickWidth
     , yAxis         # D.lwG thickWidth
+    , xAxisLabel    # D.lw D.none # D.fc thickColor
+    , yAxisLabel    # D.lw D.none # D.fc thickColor
     ]
   where
     thickWidth = 0.004
@@ -83,20 +85,16 @@ canonicalPixelSamplesDiagram font =
     axisGap = 0.02
     axisArrowLen = 0.2
     fontSize = 0.08
-    xAxis =
-        mconcat
-        [ D.arrowBetween ((1 + axisGap) ^& 0) ((1 + axisArrowLen) ^& 0)
-        , D.strokeP $ SF.textSVG' (SF.TextOpts font SF.INSIDE_H SF.KERN False fontSize fontSize) "x"
+    xAxis = D.arrowBetween ((1 + axisGap) ^& 0) ((1 + axisArrowLen) ^& 0)
+    yAxis = D.arrowBetween (0 ^& (1 + axisGap)) (0 ^& (1 + axisArrowLen))
+    xAxisLabel =
+        D.strokeP $ SF.textSVG' (SF.TextOpts font SF.INSIDE_H SF.KERN False fontSize fontSize) "x"
           # D.scaleY (-1)
           # D.translate ((1 + axisArrowLen + 2 * axisGap) ^& 0)
-        ]
-    yAxis =
-        mconcat
-        [ D.arrowBetween (0 ^& (1 + axisGap)) (0 ^& (1 + axisArrowLen))
-        , D.strokeP $ SF.textSVG' (SF.TextOpts font SF.INSIDE_H SF.KERN False fontSize fontSize) "y"
+    yAxisLabel =
+        D.strokeP $ SF.textSVG' (SF.TextOpts font SF.INSIDE_H SF.KERN False fontSize fontSize) "y"
           # D.scaleY (-1)
           # D.translate (0 ^& (1 + axisArrowLen + 2 * axisGap))
-        ]
 
     -- The thin grey lines.
     nf2 = nf * nf
