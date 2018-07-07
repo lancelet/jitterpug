@@ -4,14 +4,17 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 module Graphics.Jitterpug.CMJS (
     -- * Functions
-    canonicalPixelSamples
+      canonicalPixelSamples
     ) where
 
-import           Control.Monad.Primitive     (PrimMonad, PrimState)
-import           Data.Vector.Generic.Mutable (MVector)
-import qualified Data.Vector.Generic.Mutable as VGM
+-- import           Control.Monad.Primitive     (PrimMonad, PrimState)
+import           Control.Monad.Primitive     (PrimMonad)
+-- import           Data.Vector.Generic.Mutable (MVector)
+-- import qualified Data.Vector.Generic.Mutable as VGM
 import           Linear.V2                   (V2)
 import qualified Linear.V2                   as V2
+
+-- | Sample an image.
 
 
 -- | Produce jittered pixel samples canonically.
@@ -34,27 +37,27 @@ import qualified Linear.V2                   as V2
 --   sampling routine.
 canonicalPixelSamples
     :: ( PrimMonad m
-       , MVector v (V2 a)
        , Num a
        , Fractional a )
-    => m a                     -- ^ Random number generator.
-    -> v (PrimState m) (V2 a)  -- ^ Multable vector for the pixel samples.
-    -> Int                     -- ^ Square root of vector length.
+    => m a                           -- ^ Random number generator.
+    -> (Int -> Int -> V2 a -> m ())  -- ^ Operation to set a value.
+    -> Int                           -- ^ m - number of samples in x direction.
+    -> Int                           -- ^ n - number of samples in y direction.
     -> m ()
-canonicalPixelSamples !rand !xs !n = do
-    let nf = fromIntegral n
+canonicalPixelSamples !rand !set !m !n = do
+    let
+        fm = fromIntegral m
+        fn = fromIntegral n
     loop 0 (<n) (+1) $ \j -> do
         let fj = fromIntegral j
-        loop 0 (<n) (+1) $ \i -> do
+        loop 0 (<m) (+1) $ \i -> do
             let fi = fromIntegral i
-            xjit <- rand
-            yjit <- rand
-            VGM.unsafeWrite
-                xs
-                (j * n + i)
+            jx <- rand
+            jy <- rand
+            set i j
                 (V2.V2
-                    ((fi + (fj + xjit) / nf) / nf)
-                    ((fj + (fi + yjit) / nf) / nf))
+                    ((fi + (fj + jx) / fn) / fm)
+                    ((fj + (fi + jy) / fm) / fn))
 {-# INLINE canonicalPixelSamples #-}
 
 

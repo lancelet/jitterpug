@@ -30,6 +30,27 @@ renderCanonicalPixelSamplesDiagram filePath = do
     renderSVG filePath (D.dims (V2 400 400)) diagram
 
 
+-- | Example Canonical Pixel Samples.
+--
+--   This function generates samples within a pixel according to the canonical
+--   N-rooks sampling arrangement.
+--
+--   Samples are jittered over a slightly-reduced domain so that they don't
+--   overlap too much with the lines.
+exampleCPS
+    :: Int                    -- ^ m - number of samples in x direction.
+    -> Int                    -- ^ n - number of samples in y direction.
+    -> U.Vector (V2 Float)
+exampleCPS m n = runST $ do
+    vector <- UM.unsafeNew (m * n)
+    gen    <- MWC.create
+    let
+        rand    = MWC.uniformR (0.25, 0.75) gen
+        set i j = UM.unsafeWrite vector (j * m + i)
+    CMJS.canonicalPixelSamples rand set m n
+    U.unsafeFreeze vector
+
+
 -- | Diagram showing the canonical N-rooks sampling arrangement.
 --
 --   This diagram is intended to show the same as Figure 1 from:
@@ -55,9 +76,11 @@ canonicalPixelSamplesDiagram font =
     thinWidth  = 0.6 * thickWidth
     thickColor = C.black
     thinColor  = C.lightgrey
-    n          = 5
-    samples    = exampleCPS n
-    nf         = fromIntegral n
+    m          = 5
+    n          = 4
+    samples    = exampleCPS m n
+    fm         = fromIntegral m
+    fn         = fromIntegral n
 
     -- The sample position circles.
     circleRadius = 0.01
@@ -73,12 +96,12 @@ canonicalPixelSamplesDiagram font =
         . D.fromVertices
         $ D.p2
         <$> [ (0,0), (0,1), (1,1), (1,0), (0,0) ]
-    vThickLine x = D.fromVertices $ D.p2 <$> [ (x / nf, 0), (x / nf, 1) ]
-    hThickLine y = D.fromVertices $ D.p2 <$> [ (0, y / nf), (1, y / nf) ]
+    vThickLine x = D.fromVertices $ D.p2 <$> [ (x / fm, 0), (x / fm, 1) ]
+    hThickLine y = D.fromVertices $ D.p2 <$> [ (0, y / fn), (1, y / fn) ]
     allThickLines =
         mconcat
         $ [ usq # D.lineJoin D.LineJoinRound ]
-        ++ (vThickLine <$> [ 1 .. n ])
+        ++ (vThickLine <$> [ 1 .. m ])
         ++ (hThickLine <$> [ 1 .. n ])
 
     -- Axis labels.
@@ -97,28 +120,13 @@ canonicalPixelSamplesDiagram font =
           # D.translate (0 ^& (1 + axisArrowLen + 2 * axisGap))
 
     -- The thin grey lines.
-    nf2 = nf * nf
-    vThinLine x = D.fromVertices $ D.p2 <$> [ (x / nf2, 0), (x / nf2, 1) ]
-    hThinLine y = D.fromVertices $ D.p2 <$> [ (0, y / nf2), (1, y / nf2) ]
+    -- (NOTE: role of m and n is reversed for thin lines)
+    fn2 = fn * fn
+    fm2 = fm * fm
+    fmn = fm * fn
+    vThinLine x = D.fromVertices $ D.p2 <$> [ (x / fmn, 0), (x / fmn, 1) ]
+    hThinLine y = D.fromVertices $ D.p2 <$> [ (0, y / fmn), (1, y / fmn) ]
     allThinLines =
         mconcat
-        $  (vThinLine <$> [ 1 .. (n*n) ])
-        ++ (hThinLine <$> [ 1 .. (n*n) ])
-
-
--- | Example Canonical Pixel Samples.
---
---   This function generates samples within a pixel according to the canonical
---   N-rooks sampling arrangement.
---
---   Samples are jittered over a slightly-reduced domain so that they don't
---   overlap too much with the lines.
-exampleCPS
-    :: Int
-    -> U.Vector (V2 Float)
-exampleCPS n = runST $ do
-    xs  <- UM.unsafeNew (n * n)
-    gen <- MWC.create
-    let rand = MWC.uniformR (0.25, 0.75) gen
-    CMJS.canonicalPixelSamples rand xs n
-    U.unsafeFreeze xs
+        $  (vThinLine <$> [ 1 .. (m*n) ])
+        ++ (hThinLine <$> [ 1 .. (m*n) ])
