@@ -2,6 +2,7 @@
 {-# LANGUAGE TypeFamilies        #-}
 module Jitterpug.Sample
     ( SampleOps(SampleOps, sampleOpsScale, sampleOpsAdd)
+    , Jittering(Jittering)
     , cmj
     , permute
     , randFloat
@@ -55,8 +56,10 @@ data SampleOps s v
     , sampleOpsAdd   :: v -> v -> v
     }
 
-cmj :: Word32 -> Word32 -> Word32 -> Word32 -> V2 Float
-cmj s m n p =
+newtype Jittering = Jittering { unJittering :: Float }
+
+cmj :: Jittering -> Word32 -> Word32 -> Word32 -> Word32 -> V2 Float
+cmj jit s m n p =
     let sdivm, smodm :: Word32
         (sdivm, smodm) = s `quotRem` m
 
@@ -69,8 +72,8 @@ cmj s m n p =
         mf = fromIntegral m
 
         jx, jy :: Float
-        jx = randFloat s (p * 0xa399d265)
-        jy = randFloat s (p * 0x711ad6a5)
+        jx = unJittering jit * randFloat s (p * 0xa399d265)
+        jy = unJittering jit * randFloat s (p * 0x711ad6a5)
 
         x, y :: Float
         x = (fromIntegral smodm + (sy + jx) / nf) / mf
