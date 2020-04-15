@@ -8,6 +8,11 @@ module Jitterpug.Sample
     )
 where
 
+-- Based on:
+--
+--   Kensler (2013) Correlated Multi-Jittered Sampling.
+--     Pixar Technical Memo 13-01.
+
 import           Control.Monad                  ( when )
 import           Control.Monad.Primitive        ( PrimMonad
                                                 , PrimState
