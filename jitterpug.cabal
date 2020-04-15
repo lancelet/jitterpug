@@ -28,8 +28,18 @@ common ghc-options
     -Wincomplete-uni-patterns -Wredundant-constraints
 
 library
-  import:         base, ghc-options
-  hs-source-dirs: src
+  import:          base, ghc-options
+  hs-source-dirs:  src
+  other-modules:
+    Jitterpug.Bucket
+    Jitterpug.Filter
+    Jitterpug.Geom
+    Jitterpug.Image
+    Jitterpug.Sample
+
+  exposed-modules: Jitterpug
+  build-depends:
+    primitive
 
 executable jitterpug
   import:         base, ghc-options
