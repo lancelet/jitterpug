@@ -1,0 +1,37 @@
+cabal-version:      2.4
+name:               jitterpug
+version:            0.1.0.0
+synopsis:           Correlated Multi-Jittered Sampling of 2D Images
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Jonathan Merritt
+maintainer:         j.s.merritt@gmail.com
+copyright:          Copyright (C) 2020 Jitterpug Developers
+category:           Graphics
+build-type:         Simple
+extra-source-files: CHANGELOG.md
+description:
+  Please see the README for the package at its homepage:
+  https://github.com/lancelet/jitterpug
+
+source-repository head
+  type:     git
+  location: git://github.com/lancelet/jitterpug.git
+
+common base
+  default-language: Haskell2010
+  build-depends:    base ^>=4.13.0.0
+
+common ghc-options
+  ghc-options:
+    -Wall -Wcompat -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wredundant-constraints
+
+library
+  import:         base, ghc-options
+  hs-source-dirs: src
+
+executable jitterpug
+  import:         base, ghc-options
+  hs-source-dirs: app
+  main-is:        Main.hs
