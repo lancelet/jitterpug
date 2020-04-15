@@ -38,8 +38,7 @@ library
     Jitterpug.Sample
 
   exposed-modules: Jitterpug
-  build-depends:
-    primitive
+  build-depends:   primitive
 
 executable jitterpug
   import:         base, ghc-options

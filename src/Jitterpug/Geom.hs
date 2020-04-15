@@ -9,6 +9,7 @@ data V2 a
     { v2x :: a
     , v2y :: a
     }
+  deriving (Eq, Show)
 
 data Size a
   = Size
