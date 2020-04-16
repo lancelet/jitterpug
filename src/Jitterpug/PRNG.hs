@@ -15,6 +15,7 @@ module Jitterpug.PRNG
     , Index(Index)
     , PermutationLength(PermutationLength, unPermutationLength)
     , patternMul
+    , offsetForPixel
     , randFloat
     , permuteIndexWord32
     )
@@ -26,6 +27,8 @@ import           Data.Bits                      ( shiftR
                                                 , (.|.)
                                                 )
 import           Data.Word                      ( Word32 )
+
+import           Jitterpug.Geom                 ( V2(V2) )
 
 -- | Pattern in a pseudo-random number generator.
 --
@@ -42,6 +45,15 @@ newtype PermutationLength =
 -- | Multiply a 'Word32' value by a pattern.
 patternMul :: Word32 -> Pattern -> Pattern
 patternMul w p = Pattern (w * unPattern p)
+{-# INLINE patternMul #-}
+
+-- | Standardised way to offset a pattern using pixel coordinates.
+offsetForPixel :: V2 Int -> Pattern -> Pattern
+offsetForPixel (V2 i j) = patternMul w
+  where
+    w :: Word32
+    w = 0xabcdef0 * fromIntegral j + fromIntegral i
+{-# INLINE offsetForPixel #-}
 
 -- | Pseudo-random 'Float' from the specified index in a particular pattern.
 randFloat :: Pattern -> Index -> Float

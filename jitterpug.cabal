@@ -39,6 +39,7 @@ library
   build-depends:
     , massiv
     , vector
+    , vector-th-unbox
 
 test-suite jitterpug-tests
   import:         base, ghc-options
