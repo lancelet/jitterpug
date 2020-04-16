@@ -1,5 +1,16 @@
+{-|
+Module      : Jitterpug.Sample
+Description :
+
+Sample generation and image sampling.
+
+The 'cmj' function in this module is a Haskell transcriptions of code listing 6
+in:
+
+  - Kensler A (2013) Correlated Multi-Jittered Sampling.
+    Pixar Technical Memo 13-01.
+-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies        #-}
 module Jitterpug.Sample
     ( SampleOps(SampleOps, sampleOpsScale, sampleOpsAdd)
     , Jittering(unJittering)
@@ -17,12 +28,6 @@ import           Jitterpug.PRNG                 ( Index
                                                 , Pattern
                                                 )
 import qualified Jitterpug.PRNG                as PRNG
-
--- Based on:
---
---   Kensler (2013) Correlated Multi-Jittered Sampling.
---     Pixar Technical Memo 13-01.
-
 
 -- | A vector space for samples.
 data SampleOps s v
@@ -52,6 +57,8 @@ newtype AspectRatio = AspectRatio { unAspectRatio :: Float }
 --
 -- Generate a sample in a unit square, using the correlated multi-jittered
 -- sampling technique.
+--
+-- This is a Haskell transcription of code listing 6 from Kensler (2013).
 cmj
     :: Jittering     -- ^ Jittering multiplication factor.
     -> NSamples      -- ^ Total number of samples.
