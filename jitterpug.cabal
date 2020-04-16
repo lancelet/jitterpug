@@ -34,8 +34,11 @@ library
     Jitterpug.Geom
     Jitterpug.PRNG
     Jitterpug.SamplePositions
+    Jitterpug.Tile
 
-  build-depends:   primitive
+  build-depends:
+    , massiv
+    , vector
 
 test-suite jitterpug-tests
   import:         base, ghc-options
