@@ -14,6 +14,7 @@ module Jitterpug.PRNG
     ( Pattern(Pattern)
     , Index(Index)
     , PermutationLength(PermutationLength, unPermutationLength)
+    , patternMul
     , randFloat
     , permuteIndexWord32
     )
@@ -37,6 +38,10 @@ newtype Index = Index { unIndex :: Word32 } deriving (Show)
 -- | Length of a permutation.
 newtype PermutationLength =
   PermutationLength { unPermutationLength :: Word32 } deriving (Show)
+
+-- | Multiply a 'Word32' value by a pattern.
+patternMul :: Word32 -> Pattern -> Pattern
+patternMul w p = Pattern (w * unPattern p)
 
 -- | Pseudo-random 'Float' from the specified index in a particular pattern.
 randFloat :: Pattern -> Index -> Float
