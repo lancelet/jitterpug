@@ -1,6 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies        #-}
-module Jitterpug.Sample where
+module Jitterpug.Sample
+    ( SampleOps(SampleOps, sampleOpsScale, sampleOpsAdd)
+    , Jittering(unJittering)
+    , NSamples(NSamples, unNSamples)
+    , AspectRatio(AspectRatio, unAspectRatio)
+    , mkJittering
+    , cmj
+    )
+where
 
 import           Data.Word                      ( Word32 )
 
@@ -23,6 +31,7 @@ data SampleOps s v
     , sampleOpsAdd   :: v -> v -> v
     }
 
+-- | Amount of jittering.
 newtype Jittering = Jittering { unJittering :: Float }
 
 -- | Create a 'Jittering' value.
@@ -33,8 +42,10 @@ mkJittering c | c > 1     = Jittering 1
               | c < 0     = Jittering 0
               | otherwise = Jittering c
 
+-- | Total number of samples.
 newtype NSamples = NSamples { unNSamples :: Word32 }
 
+-- | Aspect ratio of samples within a unit square.
 newtype AspectRatio = AspectRatio { unAspectRatio :: Float }
 
 -- | Correlated Multi-Jittered Sampling.
