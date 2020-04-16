@@ -6,14 +6,14 @@ where
 
 import           Hedgehog                       ( Property
                                                 , assert
+                                                , cover
+                                                , forAll
                                                 , property
                                                 , withTests
-                                                , cover
                                                 , (===)
-                                                , forAll
                                                 )
-import qualified Hedgehog.Gen as Gen
-import qualified Hedgehog.Range as Range
+import qualified Hedgehog.Gen                  as Gen
+import qualified Hedgehog.Range                as Range
 import           Test.Tasty                     ( TestTree )
 import qualified Test.Tasty                    as Tasty
 import           Test.Tasty.Hedgehog            ( testProperty )
@@ -121,18 +121,18 @@ unit_randFloatComparison = withTests 1 $ property $ do
 -- then the values should be distributed approximately evenly.
 prop_randFloatRange :: Property
 prop_randFloatRange = withTests 10000 $ property $ do
-  pat <- forAll $ PRNG.Pattern <$> Gen.word32 Range.linearBounded
-  idx <- forAll $ PRNG.Index <$> Gen.word32 Range.linearBounded
-  let f :: Float
-      f = PRNG.randFloat pat idx
-  assert $ f >= 0.0
-  assert $ f < 1.0
-  let minCov = 18  -- minimum coverage; close to 20%
-  cover minCov "0.0 to 0.2" (f >= 0.0 && f <= 0.2)
-  cover minCov "0.2 to 0.4" (f >= 0.2 && f <= 0.4)
-  cover minCov "0.4 to 0.6" (f >= 0.4 && f <= 0.6)
-  cover minCov "0.6 to 0.8" (f >= 0.6 && f <= 0.8)
-  cover minCov "0.8 to 1.0" (f >= 0.8 && f <= 1.0)
+    pat <- forAll $ PRNG.Pattern <$> Gen.word32 Range.linearBounded
+    idx <- forAll $ PRNG.Index <$> Gen.word32 Range.linearBounded
+    let f :: Float
+        f = PRNG.randFloat pat idx
+    assert $ f >= 0.0
+    assert $ f < 1.0
+    let minCov = 18  -- minimum coverage; close to 20%
+    cover minCov "0.0 to 0.2" (f >= 0.0 && f <= 0.2)
+    cover minCov "0.2 to 0.4" (f >= 0.2 && f <= 0.4)
+    cover minCov "0.4 to 0.6" (f >= 0.4 && f <= 0.6)
+    cover minCov "0.6 to 0.8" (f >= 0.6 && f <= 0.8)
+    cover minCov "0.8 to 1.0" (f >= 0.8 && f <= 1.0)
 
 --- Utility operations
 
