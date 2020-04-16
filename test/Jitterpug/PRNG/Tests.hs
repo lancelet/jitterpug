@@ -35,8 +35,8 @@ tests = Tasty.testGroup
     , testProperty "unit: randFloat matches the C version for some examples"
                    unit_randFloatComparison
     , testProperty "prop: randFloat range" prop_randFloatRange
-    , testProperty "prop: permuteIndexWord32 must contain all elements"
-                   prop_permuteAllElements
+    , testProperty "prop: permuteIndexWord32 must contain all indices"
+                   prop_permuteAllIndices
     ]
 
 ---- Unit tests
@@ -139,9 +139,10 @@ prop_randFloatRange = withTests 10000 $ property $ do
 
 -- | Permutations of all indices should contain all indices.
 --
--- eg. [7, 4, 1, 6, 5, 3, 0, 2] contains all elements from 0 to 7
-prop_permuteAllElements :: Property
-prop_permuteAllElements = property $ do
+-- eg. the length 8 index permutation [7, 4, 1, 6, 5, 3, 0, 2] contains all
+--     indices from 0 to 7
+prop_permuteAllIndices :: Property
+prop_permuteAllIndices = property $ do
     pat  <- forAll $ PRNG.Pattern <$> Gen.word32 Range.linearBounded
     plen <- forAll $ PRNG.PermutationLength <$> Gen.word32 (Range.linear 1 256)
     let indices :: [Word32]
