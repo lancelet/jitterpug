@@ -9,13 +9,17 @@ import           Data.Massiv.Array              ( Array
                                                 , D(D)
                                                 , Ix1
                                                 , Ix2(Ix2)
+                                                , N(N)
                                                 , Sz(Sz)
                                                 , Sz1
                                                 , Sz2
                                                 , U(U)
+                                                , computeAs
                                                 , makeArrayR
                                                 , makeVectorR
                                                 )
+import qualified Data.Massiv.Array             as Array
+                                                ( map )
 import           Data.Vector.Unboxed            ( Unbox )
 import           Data.Vector.Unboxed.Deriving   ( derivingUnbox )
 
@@ -37,10 +41,41 @@ data Sample e
     , sampleValue :: !e
     }
 
+newtype ImplicitImage e = ImplicitImage { unImplicitImage :: V2 Float -> e }
+
+sampleImplicitImage :: ImplicitImage e -> V2 Float -> Sample e
+sampleImplicitImage img p = Sample p (unImplicitImage img p)
+
+translateImplicitImage :: V2 Int -> ImplicitImage e -> ImplicitImage e
+translateImplicitImage t image =
+    ImplicitImage $ unImplicitImage image . Geom.addV2 t'
+  where
+    t' :: V2 Float
+    t' = fromIntegral <$> t
+
 derivingUnbox "Sample"
   [t| forall e. (Unbox e) => Sample e -> (V2 Float, e) |]
   [| \(Sample p v) -> (p, v) |]
   [| \(p, v) -> Sample p v |]
+
+sampleTile
+    :: forall e
+     . (Unbox e)
+    => Jittering
+    -> NSamples
+    -> Pattern
+    -> AspectRatio
+    -> Sz2
+    -> ImplicitImage e
+    -> Tile N (Array U Ix1 (Sample e))
+sampleTile jittering nSamples pat aspect size image = (Tile . computeAs N)
+    (samplePx <$> unTile sampleps)
+  where
+    samplePx :: Array U Ix1 (V2 Float) -> Array U Ix1 (Sample e)
+    samplePx ps = computeAs U $ Array.map (sampleImplicitImage image) ps
+
+    sampleps :: Tile D (Array U Ix1 (V2 Float))
+    sampleps = tileSamplePositions jittering nSamples pat aspect size
 
 tileSamplePositions
     :: Jittering
