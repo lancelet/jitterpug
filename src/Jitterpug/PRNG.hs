@@ -29,10 +29,10 @@ import           Data.Word                      ( Word32 )
 -- | Pattern in a pseudo-random number generator.
 --
 -- Each pattern indexes a new sequence of pseudo-random output.
-newtype Pattern = Pattern { unPattern :: Word32 }
+newtype Pattern = Pattern { unPattern :: Word32 } deriving (Show)
 
 -- | Index into a pattern.
-newtype Index = Index { unIndex :: Word32 }
+newtype Index = Index { unIndex :: Word32 } deriving (Show)
 
 -- | Length of a permutation.
 newtype PermutationLength = PermutationLength { unPermutationLength :: Word32 }

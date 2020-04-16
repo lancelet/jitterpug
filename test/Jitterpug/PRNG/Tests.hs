@@ -8,14 +8,17 @@ import           Hedgehog                       ( Property
                                                 , assert
                                                 , property
                                                 , withTests
+                                                , cover
                                                 , (===)
+                                                , forAll
                                                 )
+import qualified Hedgehog.Gen as Gen
+import qualified Hedgehog.Range as Range
 import           Test.Tasty                     ( TestTree )
 import qualified Test.Tasty                    as Tasty
 import           Test.Tasty.Hedgehog            ( testProperty )
 
 import           Data.Word                      ( Word32 )
-import           Unsafe.Coerce                  ( unsafeCoerce )
 
 import           Jitterpug.PRNG                 ( Pattern
                                                 , PermutationLength
@@ -30,6 +33,7 @@ tests = Tasty.testGroup
         unit_permutationComparison
     , testProperty "unit: randFloat matches the C version for some examples"
                    unit_randFloatComparison
+    , testProperty "prop: randFloat range" prop_randFloatRange
     ]
 
 ---- Unit tests
@@ -37,8 +41,7 @@ tests = Tasty.testGroup
 -- | Compare 'PRNG.permuteIndexWord32' against the C version.
 --
 -- We have some examples of what the C version of the @permute@ function
--- produces in a few cases. This unit test compares those values against the
--- Haskell version.
+-- produces. This unit test compares those values against the Haskell version.
 --
 -- The examples used here are completely arbitrary.
 unit_permutationComparison :: Property
@@ -111,11 +114,34 @@ unit_randFloatComparison = withTests 1 $ property $ do
 
 --- Property tests
 
+-- | Check the range of the 'PRNG.randFloat' function.
+--
+-- 'PRNG.randFloat' should always return a number in the range [0, 1).
+-- If we create a histogram of values (done here using `cover` from Hedgehog),
+-- then the values should be distributed approximately evenly.
+prop_randFloatRange :: Property
+prop_randFloatRange = withTests 10000 $ property $ do
+  pat <- forAll $ PRNG.Pattern <$> Gen.word32 Range.linearBounded
+  idx <- forAll $ PRNG.Index <$> Gen.word32 Range.linearBounded
+  let f :: Float
+      f = PRNG.randFloat pat idx
+  assert $ f >= 0.0
+  assert $ f < 1.0
+  let minCov = 18  -- minimum coverage; close to 20%
+  cover minCov "0.0 to 0.2" (f >= 0.0 && f <= 0.2)
+  cover minCov "0.2 to 0.4" (f >= 0.2 && f <= 0.4)
+  cover minCov "0.4 to 0.6" (f >= 0.4 && f <= 0.6)
+  cover minCov "0.6 to 0.8" (f >= 0.6 && f <= 0.8)
+  cover minCov "0.8 to 1.0" (f >= 0.8 && f <= 1.0)
+
 --- Utility operations
 
+-- | Check if two floats are equal up to some @eps@ value.
 approxEq :: Float -> Float -> Float -> Bool
 approxEq eps x y = x + eps > y && x - eps < y
 
+-- | Check if all elements of two @Float@ lists are equal up to some @eps@
+--   value.
 approxEqList :: Float -> [Float] -> [Float] -> Bool
 approxEqList eps xs ys
     | length xs /= length ys = False
