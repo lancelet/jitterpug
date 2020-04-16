@@ -39,7 +39,7 @@ newtype PermutationLength = PermutationLength { unPermutationLength :: Word32 }
 
 -- | Pseudo-random 'Float' from the specified index in a particular pattern.
 randFloat :: Pattern -> Index -> Float
-randFloat p i = randFloat' (unPattern p) (unIndex i)
+randFloat p i = randFloat' (unIndex i) (unPattern p)
 
 -- | Pseudo-random permutation indices.
 permuteIndexWord32 :: Pattern -> PermutationLength -> Index -> Word32
@@ -48,7 +48,7 @@ permuteIndexWord32 p l i =
 
 -- | Pseudo-random 'Float'.
 --
--- This is a Haskell transcription of 'randfloat' from Kensler (2013).
+-- This is a Haskell transcription of @randfloat@ from Kensler (2013).
 randFloat'
     :: Word32  -- ^ Index.
     -> Word32  -- ^ Pattern.
@@ -56,6 +56,9 @@ randFloat'
 randFloat' i p =
     let xorSelfShift :: Word32 -> Int -> Word32
         xorSelfShift x n = x `xor` (x `shiftR` n)
+
+        coef :: Float
+        coef = 1.0 / 4294967808.0
 
         i1, i2, i3, i4, i5, i6, i7, i8, i9, i10 :: Word32
         i1  = i `xor` p
@@ -68,11 +71,11 @@ randFloat' i p =
         i8  = i7 `xor` 0xdf6e307f
         i9  = i8 `xorSelfShift` 17
         i10 = i9 * (1 .|. (p `shiftR` 18))
-    in  fromIntegral i10 / 4294967808
+    in  fromIntegral i10 * coef
 
 -- | Pseudo-random permutation index.
 --
--- This is a Haskell transcription of 'permute' from Kensler (2013).
+-- This is a Haskell transcription of @permute@ from Kensler (2013).
 permute'
     :: Word32  -- ^ Index.
     -> Word32  -- ^ Length of the permutation.
