@@ -37,8 +37,24 @@ library
     Jitterpug.Image
     Jitterpug.Sample
 
-  exposed-modules: Jitterpug
+  exposed-modules:
+    Jitterpug
+    Jitterpug.PRNG
+
   build-depends:   primitive
+
+test-suite jitterpug-tests
+  import:         base, ghc-options
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Test.hs
+  other-modules:  Jitterpug.PRNG.Tests
+  build-depends:
+    , hedgehog
+    , jitterpug
+    , linear
+    , tasty
+    , tasty-hedgehog
 
 executable jitterpug
   import:         base, ghc-options
