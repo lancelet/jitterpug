@@ -2,7 +2,7 @@
 Module      : Jitterpug.SamplePositions
 Description :
 
-Sample generation and image sampling.
+Sample position generation.
 
 The 'cmj' function in this module is a Haskell transcriptions of code listing 6
 in:
