@@ -30,16 +30,10 @@ common ghc-options
 library
   import:          base, ghc-options
   hs-source-dirs:  src
-  other-modules:
-    Jitterpug.Bucket
-    Jitterpug.Filter
-    Jitterpug.Geom
-    Jitterpug.Image
-    Jitterpug.Sample
-
   exposed-modules:
-    Jitterpug
+    Jitterpug.Geom
     Jitterpug.PRNG
+    Jitterpug.SamplePositions
 
   build-depends:   primitive
 

@@ -1,5 +1,5 @@
 {-|
-Module      : Jitterpug.Sample
+Module      : Jitterpug.SamplePositions
 Description :
 
 Sample generation and image sampling.
@@ -11,9 +11,8 @@ in:
     Pixar Technical Memo 13-01.
 -}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Jitterpug.Sample
-    ( SampleOps(SampleOps, sampleOpsScale, sampleOpsAdd)
-    , Jittering(unJittering)
+module Jitterpug.SamplePositions
+    ( Jittering(unJittering)
     , NSamples(NSamples, unNSamples)
     , AspectRatio(AspectRatio, unAspectRatio)
     , mkJittering
@@ -28,13 +27,6 @@ import           Jitterpug.PRNG                 ( Index
                                                 , Pattern
                                                 )
 import qualified Jitterpug.PRNG                as PRNG
-
--- | A vector space for samples.
-data SampleOps s v
-  = SampleOps
-    { sampleOpsScale :: s -> v -> v
-    , sampleOpsAdd   :: v -> v -> v
-    }
 
 -- | Amount of jittering.
 newtype Jittering = Jittering { unJittering :: Float }
