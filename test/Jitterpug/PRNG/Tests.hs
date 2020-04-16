@@ -18,6 +18,7 @@ import           Test.Tasty                     ( TestTree )
 import qualified Test.Tasty                    as Tasty
 import           Test.Tasty.Hedgehog            ( testProperty )
 
+import           Data.List                      ( sort )
 import           Data.Word                      ( Word32 )
 
 import           Jitterpug.PRNG                 ( Pattern
@@ -34,6 +35,8 @@ tests = Tasty.testGroup
     , testProperty "unit: randFloat matches the C version for some examples"
                    unit_randFloatComparison
     , testProperty "prop: randFloat range" prop_randFloatRange
+    , testProperty "prop: permuteIndexWord32 must contain all elements"
+                   prop_permuteAllElements
     ]
 
 ---- Unit tests
@@ -133,6 +136,21 @@ prop_randFloatRange = withTests 10000 $ property $ do
     cover minCov "0.4 to 0.6" (f >= 0.4 && f <= 0.6)
     cover minCov "0.6 to 0.8" (f >= 0.6 && f <= 0.8)
     cover minCov "0.8 to 1.0" (f >= 0.8 && f <= 1.0)
+
+-- | Permutations of all indices should contain all indices.
+--
+-- eg. [7, 4, 1, 6, 5, 3, 0, 2] contains all elements from 0 to 7
+prop_permuteAllElements :: Property
+prop_permuteAllElements = property $ do
+    pat  <- forAll $ PRNG.Pattern <$> Gen.word32 Range.linearBounded
+    plen <- forAll $ PRNG.PermutationLength <$> Gen.word32 (Range.linear 1 256)
+    let indices :: [Word32]
+        indices = [0 .. (PRNG.unPermutationLength plen - 1)]
+
+        perms :: [Word32]
+        perms = PRNG.permuteIndexWord32 pat plen . PRNG.Index <$> indices
+
+    sort perms === indices
 
 --- Utility operations
 

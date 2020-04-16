@@ -35,16 +35,19 @@ newtype Pattern = Pattern { unPattern :: Word32 } deriving (Show)
 newtype Index = Index { unIndex :: Word32 } deriving (Show)
 
 -- | Length of a permutation.
-newtype PermutationLength = PermutationLength { unPermutationLength :: Word32 }
+newtype PermutationLength =
+  PermutationLength { unPermutationLength :: Word32 } deriving (Show)
 
 -- | Pseudo-random 'Float' from the specified index in a particular pattern.
 randFloat :: Pattern -> Index -> Float
 randFloat p i = randFloat' (unIndex i) (unPattern p)
+{-# INLINABLE randFloat #-}
 
 -- | Pseudo-random permutation indices.
 permuteIndexWord32 :: Pattern -> PermutationLength -> Index -> Word32
 permuteIndexWord32 p l i =
     permute' (unIndex i) (unPermutationLength l) (unPattern p)
+{-# INLINABLE permuteIndexWord32 #-}
 
 -- | Pseudo-random 'Float'.
 --
@@ -72,6 +75,7 @@ randFloat' i p =
         i9  = i8 `xorSelfShift` 17
         i10 = i9 * (1 .|. (p `shiftR` 18))
     in  fromIntegral i10 * coef
+{-# INLINE randFloat' #-}
 
 -- | Pseudo-random permutation index.
 --
@@ -118,3 +122,4 @@ permute' i l p =
                     i17 = i16 `xor` (i16 `shiftR` 5)
                 in  if (i17 < l) then i17 else go i17
     in  (go i + p) `mod` l
+{-# INLINE permute' #-}
