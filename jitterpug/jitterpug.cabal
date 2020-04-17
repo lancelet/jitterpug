@@ -10,6 +10,7 @@ copyright:          Copyright (C) 2020 Jitterpug Developers
 category:           Graphics
 build-type:         Simple
 extra-source-files: CHANGELOG.md
+tested-with:        GHC ==8.8.3
 description:
   Please see the README for the package at its homepage:
   https://github.com/lancelet/jitterpug
