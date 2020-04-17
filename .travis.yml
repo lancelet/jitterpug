@@ -22,7 +22,7 @@ script:
 - ./.ci/build.sh
 
 deploy:
-  local_dir: ./jitterpug-docs/.stack-work/tintin/rendered
+  local_dir: ./jitterpug-doc/.stack-work/tintin/rendered
   provider: pages
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
