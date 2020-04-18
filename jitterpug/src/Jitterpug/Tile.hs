@@ -23,15 +23,15 @@ import qualified Data.Massiv.Array             as Array
 import           Data.Vector.Unboxed            ( Unbox )
 import           Data.Vector.Unboxed.Deriving   ( derivingUnbox )
 
+import           Jitterpug.CMJ                  ( AspectRatio
+                                                , Jittering
+                                                , NSamples
+                                                )
+import qualified Jitterpug.CMJ                 as CMJ
 import           Jitterpug.Geom                 ( V2(V2) )
 import qualified Jitterpug.Geom                as Geom
 import           Jitterpug.PRNG                 ( Pattern )
 import qualified Jitterpug.PRNG                as PRNG
-import           Jitterpug.SamplePositions      ( AspectRatio
-                                                , Jittering
-                                                , NSamples
-                                                )
-import qualified Jitterpug.SamplePositions     as SamplePositions
 
 newtype Tile r e = Tile { unTile :: Array r Ix2 e }
 
@@ -104,7 +104,7 @@ tileSamplePositions jittering nSamples pat aspect size = Tile tileArray
             makeSample sampleIdx = Geom.addV2 pixelOrigin curSamplePos
                   where
                     curSamplePos :: V2 Float
-                    curSamplePos = SamplePositions.cmj
+                    curSamplePos = CMJ.cmj
                         jittering
                         nSamples
                         pat'
@@ -113,7 +113,7 @@ tileSamplePositions jittering nSamples pat aspect size = Tile tileArray
         in  makeVectorR U Seq (nSamplesToSz1 nSamples) makeSample
 
 nSamplesToSz1 :: NSamples -> Sz1
-nSamplesToSz1 = Sz . fromIntegral . SamplePositions.unNSamples
+nSamplesToSz1 = Sz . fromIntegral . CMJ.unNSamples
 
 ix2ToV2 :: Ix2 -> V2 Int
 ix2ToV2 (Ix2 i j) = V2 i j

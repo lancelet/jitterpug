@@ -1,8 +1,8 @@
 cradle:
   stack:
-    - path: ./test
+    - path: ./jitterpug/test
       component: "jitterpug:test:jitterpug-tests"
-    - path: ./src
+    - path: ./jitterpug/src
       component: "jitterpug:lib"
-    - path: ./app
+    - path: ./jitterpug/app
       component: "jitterpug:exe:jitterpug"
