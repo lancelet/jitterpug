@@ -1,7 +1,7 @@
 cabal-version:      2.4
-name:               jitterpug
+name:               jitterpug-doc
 version:            0.1.0.0
-synopsis:           Correlated Multi-Jittered Sampling of 2D Images
+synopsis:           Documentation for Jitterpug
 license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Jonathan Merritt
@@ -32,30 +32,21 @@ library
   import:          base, ghc-options
   hs-source-dirs:  src
   exposed-modules:
-    Jitterpug.CMJ
-    Jitterpug.Geom
-    Jitterpug.PRNG
-    Jitterpug.Tile
+    Jitterpug.Doc.CMJPixel
+    Jitterpug.Doc.Grid
 
   build-depends:
-    , massiv
-    , vector
-    , vector-th-unbox
-
-test-suite jitterpug-tests
-  import:         base, ghc-options
-  type:           exitcode-stdio-1.0
-  hs-source-dirs: test
-  main-is:        Test.hs
-  other-modules:  Jitterpug.PRNG.Tests
-  build-depends:
-    , hedgehog
+    , colour
+    , diagrams-lib
+    , diagrams-svg
+    , extra
     , jitterpug
-    , linear
-    , tasty
-    , tasty-hedgehog
 
-executable jitterpug
+executable jitterpug-doc
   import:         base, ghc-options
   hs-source-dirs: app
   main-is:        Main.hs
+  build-depends:
+    , jitterpug-doc
+    , text
+    , tintin
