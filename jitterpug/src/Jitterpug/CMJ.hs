@@ -79,8 +79,8 @@ cmj (Jittering jit) (NSamples nn) pat (AspectRatio a) sampleIndex =
         jx, jy, jx', jy' :: Float
         jx' = PRNG.randFloat (PRNG.patternMul 0x967a889b pat) (PRNG.Index s)
         jy' = PRNG.randFloat (PRNG.patternMul 0x368cc8b7 pat) (PRNG.Index s)
-        jx = 0.5 + (jit * (jx' - 0.5))
-        jy = 0.5 + (jit * (jy' - 0.5))
+        jx  = 0.5 + (jit * (jx' - 0.5))
+        jy  = 0.5 + (jit * (jy' - 0.5))
 
         x, y :: Float
         x = (fromIntegral sx + (fromIntegral sy + jx) / fromIntegral n)

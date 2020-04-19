@@ -83,6 +83,34 @@ render5x5Pixel filePath =
     in
         SVG.renderSVG filePath size diagram
 
+render5x3Pixel :: FilePath -> IO ()
+render5x3Pixel filePath =
+    let
+        geom :: CMJPixelDiagramGeom Double
+        geom = CMJPixelDiagramGeom 5 3 0.01
+
+        gridStyle :: GridStyle Double SVG.B
+        gridStyle = Grid.defaultGridStyle
+
+        sampleStyle :: SampleStyle Double SVG.B
+        sampleStyle = defaultSampleStyle
+
+        size :: SizeSpec Diagrams.V2 Double
+        size = mkSizeSpec (Diagrams.V2 (Just 320) Nothing)
+
+        pat :: Pattern
+        pat = PRNG.Pattern 1
+
+        jittering :: Jittering
+        jittering = CMJ.mkJittering 0.5
+
+        diagram :: Diagram SVG.B
+        diagram = frame
+            0.02
+            (cmjPixelDiagram geom gridStyle sampleStyle pat jittering)
+    in
+        SVG.renderSVG filePath size diagram
+
 cmjPixelDiagram
     :: forall b n
      . DiaScalar n b

@@ -19,12 +19,11 @@ import qualified Jitterpug.Doc.CMJPixel        as CMJPixel
 
 main :: IO ()
 main = do
-    let
-      dir :: String
-      dir = ".stack-work/tintin/rendered/"
+    let dir :: String
+        dir = ".stack-work/tintin/rendered/"
 
-      outputDirectory :: OutputDirectory
-      outputDirectory = OutputDirectory (Text.pack dir)
+        outputDirectory :: OutputDirectory
+        outputDirectory = OutputDirectory (Text.pack dir)
 
     -- run Tintin to do normal documentation generation
     putStrLn "Running Tintin"
@@ -38,8 +37,7 @@ main = do
 
 runTintin :: OutputDirectory -> IO ()
 runTintin outputDirectory = do
-    let
-        logger :: Tintin.Capabilities.Logging.Capability
+    let logger :: Tintin.Capabilities.Logging.Capability
         logger = Tintin.Capabilities.Logging.stdOut
 
         filesystem :: Tintin.Capabilities.Filesystem.Capability
@@ -58,3 +56,4 @@ renderImages outputDirectory = do
         dir                    = Text.unpack dirTxt
 
     CMJPixel.render5x5Pixel (dir <> "cmj-5x5-pixel.svg")
+    CMJPixel.render5x3Pixel (dir <> "cmj-5x3-pixel.svg")
