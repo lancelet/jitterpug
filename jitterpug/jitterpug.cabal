@@ -33,21 +33,27 @@ library
   hs-source-dirs:  src
   exposed-modules:
     Jitterpug.CMJ
+    Jitterpug.Filter
     Jitterpug.Geom
     Jitterpug.PRNG
+    Jitterpug.Sample
     Jitterpug.Tile
 
   build-depends:
+    , deepseq
     , massiv
     , vector
-    , vector-th-unbox
 
 test-suite jitterpug-tests
   import:         base, ghc-options
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
   main-is:        Test.hs
-  other-modules:  Jitterpug.PRNG.Tests
+  other-modules:
+    Jitterpug.CMJ.Tests
+    Jitterpug.PRNG.Tests
+    Jitterpug.Test.Util
+
   build-depends:
     , hedgehog
     , jitterpug

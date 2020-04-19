@@ -24,22 +24,18 @@ import qualified Diagrams.Backend.SVG          as SVG
                                                 , renderSVG
                                                 )
 
-import           Jitterpug.CMJ                  ( AspectRatio(AspectRatio)
+import           Jitterpug.CMJ                  ( AspectRatio
                                                 , Jittering
-                                                , NSamples(NSamples)
+                                                , NSamples
                                                 , cmj
                                                 )
-import qualified Jitterpug.CMJ                 as CMJ
 import           Jitterpug.Doc.Grid             ( DiaScalar
                                                 , GridGeom(GridGeom)
                                                 , GridStyle
                                                 )
 import qualified Jitterpug.Doc.Grid            as Grid
 import           Jitterpug.Geom                 ( V2(V2) )
-import           Jitterpug.PRNG                 ( Index(Index)
-                                                , Pattern
-                                                )
-import qualified Jitterpug.PRNG                as PRNG
+import           Jitterpug.PRNG                 ( Pattern )
 
 
 data CMJPixelDiagramGeom n
@@ -57,8 +53,7 @@ defaultSampleStyle = SampleStyle $ lwO 0 # fc (sRGB24 0x00 0x7E 0x9C)
 
 render5x5Pixel :: FilePath -> IO ()
 render5x5Pixel filePath =
-    let
-        geom :: CMJPixelDiagramGeom Double
+    let geom :: CMJPixelDiagramGeom Double
         geom = CMJPixelDiagramGeom 5 5 0.01
 
         gridStyle :: GridStyle Double SVG.B
@@ -70,23 +65,13 @@ render5x5Pixel filePath =
         size :: SizeSpec Diagrams.V2 Double
         size = mkSizeSpec (Diagrams.V2 (Just 320) Nothing)
 
-        pat :: Pattern
-        pat = PRNG.Pattern 1
-
-        jittering :: Jittering
-        jittering = CMJ.mkJittering 0.5
-
         diagram :: Diagram SVG.B
-        diagram = frame
-            0.02
-            (cmjPixelDiagram geom gridStyle sampleStyle pat jittering)
-    in
-        SVG.renderSVG filePath size diagram
+        diagram = frame 0.02 (cmjPixelDiagram geom gridStyle sampleStyle 1 0.5)
+    in  SVG.renderSVG filePath size diagram
 
 render5x3Pixel :: FilePath -> IO ()
 render5x3Pixel filePath =
-    let
-        geom :: CMJPixelDiagramGeom Double
+    let geom :: CMJPixelDiagramGeom Double
         geom = CMJPixelDiagramGeom 5 3 0.01
 
         gridStyle :: GridStyle Double SVG.B
@@ -98,18 +83,9 @@ render5x3Pixel filePath =
         size :: SizeSpec Diagrams.V2 Double
         size = mkSizeSpec (Diagrams.V2 (Just 320) Nothing)
 
-        pat :: Pattern
-        pat = PRNG.Pattern 1
-
-        jittering :: Jittering
-        jittering = CMJ.mkJittering 0.5
-
         diagram :: Diagram SVG.B
-        diagram = frame
-            0.02
-            (cmjPixelDiagram geom gridStyle sampleStyle pat jittering)
-    in
-        SVG.renderSVG filePath size diagram
+        diagram = frame 0.02 (cmjPixelDiagram geom gridStyle sampleStyle 1 0.5)
+    in  SVG.renderSVG filePath size diagram
 
 cmjPixelDiagram
     :: forall b n
@@ -132,10 +108,10 @@ cmjPixelDiagram geom gridStyle sampleStyle pat jittering =
     nyf = fromIntegral nyi
 
     nSamples :: NSamples
-    nSamples = NSamples $ fromIntegral (nxi * nyi)
+    nSamples = fromIntegral (nxi * nyi)
 
     aspect :: AspectRatio
-    aspect = AspectRatio $ fromIntegral nyi / fromIntegral nxi
+    aspect = fromIntegral nxi / fromIntegral nyi
 
     sampleCircles :: Diagram b
     sampleCircles =
@@ -149,8 +125,8 @@ cmjPixelDiagram geom gridStyle sampleStyle pat jittering =
 
     ps :: [V2 Float]
     ps =
-        [ cmj jittering nSamples pat aspect (Index i)
-        | i <- [0 .. fromIntegral (nxi * nyi) - 1]
+        [ cmj jittering nSamples pat aspect i
+        | i <- fromIntegral <$> [0 .. (nxi * nyi) - 1]
         ]
 
     gridGeom :: GridGeom

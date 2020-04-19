@@ -10,7 +10,16 @@
  *   make
  *   ./cmj
  */
+#include <math.h>
 #include <stdio.h>
+
+/* ---- Stuff from the Pixar paper ---- */
+
+typedef struct XY
+{
+  float x;
+  float y;
+} xy;
 
 unsigned permute(unsigned i, unsigned l, unsigned p) {
   unsigned w = l - 1;
@@ -46,6 +55,21 @@ float randfloat(unsigned i, unsigned p) {
   i ^= i >> 17;     i *= 1 | p >> 18;
   return i * (1.0f / 4294967808.0f);
 }
+
+xy cmj(int s, int N, int p, float a) {
+  int m = (int)(sqrtf(N * a));
+  int n = (N + m - 1) / m;
+  s = permute(s, N, p * 0x51633e2d); /* shuffle order */
+  int sx = permute(s % m, m, p * 0x68bc21eb);
+  int sy = permute(s / m, n, p * 0x02e5be93);
+  float jx = randfloat(s, p * 0x967a889b);
+  float jy = randfloat(s, p * 0x368cc8b7);
+  xy r = {(sx + (sy + jx) / n) / m,
+    (s + jy) / N};
+  return r;
+}
+
+/* ---- Printing stuff out to use in Haskell tests ---- */
 
 void printPermute(unsigned l, unsigned p) {
   unsigned i, result;
@@ -94,6 +118,17 @@ void printRandFloatExamples(unsigned p, unsigned nCases) {
   printf("]\n");
 }
 
+void printCmj5x3Example() {
+  int s;
+  xy p;
+  float a = 5.0 / 3.0;
+  printf("cmj, 5x3 pixel values:");
+  for (s = 0; s < 5*3; ++s) {
+    p = cmj(s, 5*3, 10, a);
+    printf("(%f, %f)\n", p.x, p.y);
+  }
+}
+
 int main() {
 
   printf("Permutation Examples:\n");
@@ -103,6 +138,9 @@ int main() {
   printf("\nrandfloat Examples:\n");
   printRandFloatExamples(0xa399d265, 10);
   printRandFloatExamples(0x711ad6a5, 10);
+
+  printf("\nCMJ sample position examples:\n");
+  printCmj5x3Example();
 
   return 0;
 }

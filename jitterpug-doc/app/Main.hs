@@ -16,6 +16,7 @@ import           Tintin.Domain                  ( OutputDirectory
                                                 )
 
 import qualified Jitterpug.Doc.CMJPixel        as CMJPixel
+import qualified Jitterpug.Doc.Sampling        as Sampling
 
 main :: IO ()
 main = do
@@ -57,3 +58,4 @@ renderImages outputDirectory = do
 
     CMJPixel.render5x5Pixel (dir <> "cmj-5x5-pixel.svg")
     CMJPixel.render5x3Pixel (dir <> "cmj-5x3-pixel.svg")
+    Sampling.renderSamplingImage (dir <> "sampling.svg")

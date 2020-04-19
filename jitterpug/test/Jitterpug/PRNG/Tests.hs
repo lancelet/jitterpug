@@ -22,9 +22,11 @@ import           Data.List                      ( sort )
 import           Data.Word                      ( Word32 )
 
 import           Jitterpug.PRNG                 ( Pattern
-                                                , PermutationLength
+                                                , NSamples
+                                                , Index
                                                 )
 import qualified Jitterpug.PRNG                as PRNG
+import           Jitterpug.Test.Util            ( approxEqList )
 
 tests :: TestTree
 tests = Tasty.testGroup
@@ -49,14 +51,12 @@ tests = Tasty.testGroup
 -- The examples used here are completely arbitrary.
 unit_permutationComparison :: Property
 unit_permutationComparison = withTests 1 $ property $ do
-    let len :: PermutationLength
-        len = PRNG.PermutationLength 8
+    let len :: NSamples
+        len = PRNG.NSamples 8
 
-        permIndices :: Pattern -> [Word32]
+        permIndices :: Pattern -> [Index]
         permIndices pat =
-            PRNG.permuteIndexWord32 pat len
-                .   PRNG.Index
-                <$> [0 .. (PRNG.unPermutationLength len - 1)]
+            PRNG.permuteIndex pat len . fromIntegral <$> [0 .. len - 1]
 
     permIndices (PRNG.Pattern 0xa511e9b3) === [7, 4, 1, 6, 5, 3, 0, 2]
     permIndices (PRNG.Pattern 0xa511e9b4) === [3, 1, 4, 6, 7, 2, 5, 0]
@@ -143,25 +143,12 @@ prop_randFloatRange = withTests 10000 $ property $ do
 --     indices from 0 to 7
 prop_permuteAllIndices :: Property
 prop_permuteAllIndices = property $ do
-    pat  <- forAll $ PRNG.Pattern <$> Gen.word32 Range.linearBounded
-    plen <- forAll $ PRNG.PermutationLength <$> Gen.word32 (Range.linear 1 256)
-    let indices :: [Word32]
-        indices = [0 .. (PRNG.unPermutationLength plen - 1)]
+    pat  <- forAll $ fromIntegral <$> Gen.word32 Range.linearBounded
+    plen <- forAll $ fromIntegral <$> Gen.word32 (Range.linear 1 256)
+    let indices :: [Index]
+        indices = fromIntegral <$> [0 .. plen - 1]
 
-        perms :: [Word32]
-        perms = PRNG.permuteIndexWord32 pat plen . PRNG.Index <$> indices
+        permutations :: [Index]
+        permutations = PRNG.permuteIndex pat plen <$> indices
 
-    sort perms === indices
-
---- Utility operations
-
--- | Check if two floats are equal up to some @eps@ value.
-approxEq :: Float -> Float -> Float -> Bool
-approxEq eps x y = x + eps > y && x - eps < y
-
--- | Check if all elements of two @Float@ lists are equal up to some @eps@
---   value.
-approxEqList :: Float -> [Float] -> [Float] -> Bool
-approxEqList eps xs ys
-    | length xs /= length ys = False
-    | otherwise              = all (\(x, y) -> approxEq eps x y) (zip xs ys)
+    sort permutations === indices

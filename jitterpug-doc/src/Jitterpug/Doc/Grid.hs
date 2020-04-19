@@ -21,6 +21,7 @@ import           Diagrams                       ( Diagram
                                                 , lineCap
                                                 , lineJoin
                                                 , lwO
+                                                , opacity
                                                 , p2
                                                 , rect
                                                 , translateX
@@ -60,7 +61,8 @@ defaultGridStyle = GridStyle
                            # lc (sRGB24 0x00 0x00 0x00)
                            # lineCap LineCapButt
     , gridStyleMinorLine = lwO 0.6
-                           # lc (sRGB24 0xCF 0xCF 0xCF)
+                           # lc (sRGB24 0x00 0x00 0x00)
+                           # opacity 0.2
                            # lineCap LineCapButt
     }
 

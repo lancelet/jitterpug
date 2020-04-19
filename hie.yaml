@@ -6,6 +6,10 @@ cradle:
       component: "jitterpug:lib"
     - path: ./jitterpug/app
       component: "jitterpug:exe:jitterpug"
+    - path: ./jitterpug-benchmarks/src
+      component: "jitterpug-benchmarks:lib"
+    - path: ./jitterpug-benchmarks/app
+      component: "jitterpug-benchmarks:exe:jitterpug-benchmarks"
     - path: ./jitterpug-doc/lib
       component: "jitterpug-doc:lib"
     - path: ./jitterpug-doc/src

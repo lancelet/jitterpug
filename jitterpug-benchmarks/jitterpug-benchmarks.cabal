@@ -1,7 +1,7 @@
 cabal-version:      2.4
-name:               jitterpug-doc
+name:               jitterpug-benchmarks
 version:            0.1.0.0
-synopsis:           Documentation for Jitterpug
+synopsis:           Benchmarks for Jitterpug
 license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Jonathan Merritt
@@ -31,27 +31,15 @@ common ghc-options
 library
   import:          base, ghc-options
   hs-source-dirs:  src
-  exposed-modules:
-    Jitterpug.Doc.CMJPixel
-    Jitterpug.Doc.Grid
-    Jitterpug.Doc.Sampling
-    Jitterpug.Doc.ZonePlate
-
+  exposed-modules: Jitterpug.PRNG.Bench
   build-depends:
-    , Color
-    , colour
-    , diagrams-lib
-    , diagrams-svg
-    , extra
+    , criterion
     , jitterpug
-    , massiv
-    , massiv-io
 
-executable jitterpug-doc
+executable jitterpug-benchmarks
   import:         base, ghc-options
   hs-source-dirs: app
   main-is:        Main.hs
   build-depends:
-    , jitterpug-doc
-    , text
-    , tintin
+    , criterion
+    , jitterpug-benchmarks

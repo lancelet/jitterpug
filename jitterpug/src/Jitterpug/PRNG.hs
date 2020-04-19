@@ -10,14 +10,14 @@ number generators found in:
   - Kensler A (2013) Correlated Multi-Jittered Sampling.
     Pixar Technical Memo 13-01.
 -}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Jitterpug.PRNG
-    ( Pattern(Pattern)
-    , Index(Index)
-    , PermutationLength(PermutationLength, unPermutationLength)
-    , patternMul
+    ( Pattern(Pattern, unPattern)
+    , Index(Index, unIndex)
+    , NSamples(NSamples, unNSamples)
     , offsetForPixel
     , randFloat
-    , permuteIndexWord32
+    , permuteIndex
     )
 where
 
@@ -33,25 +33,22 @@ import           Jitterpug.Geom                 ( V2(V2) )
 -- | Pattern in a pseudo-random number generator.
 --
 -- Each pattern indexes a new sequence of pseudo-random output.
-newtype Pattern = Pattern { unPattern :: Word32 } deriving (Show)
+newtype Pattern = Pattern { unPattern :: Word32 }
+  deriving (Show, Eq, Ord, Num, Real, Enum, Integral)
 
 -- | Index into a pattern.
-newtype Index = Index { unIndex :: Word32 } deriving (Show)
+newtype Index = Index { unIndex :: Word32 }
+  deriving (Show, Eq, Ord, Num, Real, Enum, Integral)
 
--- | Length of a permutation.
-newtype PermutationLength =
-  PermutationLength { unPermutationLength :: Word32 } deriving (Show)
-
--- | Multiply a 'Word32' value by a pattern.
-patternMul :: Word32 -> Pattern -> Pattern
-patternMul w p = Pattern (w * unPattern p)
-{-# INLINE patternMul #-}
+-- | Total number of samples / total length.
+newtype NSamples = NSamples { unNSamples :: Word32 }
+  deriving (Show, Eq, Ord, Num, Real, Enum, Integral)
 
 -- | Standardised way to offset a pattern using pixel coordinates.
 offsetForPixel :: V2 Int -> Pattern -> Pattern
-offsetForPixel (V2 i j) = patternMul w
+offsetForPixel (V2 i j) = (*) w
   where
-    w :: Word32
+    w :: Pattern
     w = 0xabcdef0 * fromIntegral j + fromIntegral i
 {-# INLINE offsetForPixel #-}
 
@@ -61,10 +58,10 @@ randFloat p i = randFloat' (unIndex i) (unPattern p)
 {-# INLINABLE randFloat #-}
 
 -- | Pseudo-random permutation indices.
-permuteIndexWord32 :: Pattern -> PermutationLength -> Index -> Word32
-permuteIndexWord32 p l i =
-    permute' (unIndex i) (unPermutationLength l) (unPattern p)
-{-# INLINABLE permuteIndexWord32 #-}
+permuteIndex :: Pattern -> NSamples -> Index -> Index
+permuteIndex p l i =
+    Index $ permute' (unIndex i) (unNSamples l) (unPattern p)
+{-# INLINABLE permuteIndex #-}
 
 -- | Pseudo-random 'Float'.
 --
@@ -137,6 +134,6 @@ permute' i l p =
                     i15 = i14 * 0xc860a3df
                     i16 = i15 .&. w
                     i17 = i16 `xor` (i16 `shiftR` 5)
-                in  if (i17 < l) then i17 else go i17
+                in  if i17 < l then i17 else go i17
     in  (go i + p) `mod` l
 {-# INLINE permute' #-}
