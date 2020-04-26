@@ -35,8 +35,10 @@ library
     Jitterpug.CMJ
     Jitterpug.Filter
     Jitterpug.Geom
+    Jitterpug.ImageFn
+    Jitterpug.Imager
     Jitterpug.PRNG
-    Jitterpug.Sample
+    Jitterpug.Sampler
     Jitterpug.Tile
 
   build-depends:
@@ -60,6 +62,13 @@ test-suite jitterpug-tests
     , linear
     , tasty
     , tasty-hedgehog
+
+test-suite jitterpug-doctests
+  import:         base, ghc-options
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: doctest
+  main-is:        Test.hs
+  build-depends:  doctest
 
 executable jitterpug
   import:         base, ghc-options

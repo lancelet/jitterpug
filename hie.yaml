@@ -2,6 +2,8 @@ cradle:
   stack:
     - path: ./jitterpug/test
       component: "jitterpug:test:jitterpug-tests"
+    - path: ./jitterpug/doctest
+      component: "jitterpug:test:jitterpug-doctests"
     - path: ./jitterpug/src
       component: "jitterpug:lib"
     - path: ./jitterpug/app
