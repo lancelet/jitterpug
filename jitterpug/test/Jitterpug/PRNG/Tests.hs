@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Jitterpug.PRNG.Tests
   ( tests,
@@ -6,8 +7,13 @@ module Jitterpug.PRNG.Tests
 where
 
 import Data.List (sort)
+import Data.String (fromString)
+import Data.Word (Word8)
 import Hedgehog
   ( (===),
+    Gen,
+    LabelName,
+    MonadTest,
     Property,
     assert,
     cover,
@@ -16,141 +22,134 @@ import Hedgehog
     withTests,
   )
 import qualified Hedgehog.Gen as Gen
+import Hedgehog.Internal.Property (CoverPercentage)
+import Hedgehog.Internal.Source (HasCallStack)
 import qualified Hedgehog.Range as Range
 import Jitterpug.PRNG
   ( Index,
     NSamples,
+    PRNG,
     Pattern,
+    kensler,
+    randFloat,
+    randPermute,
   )
-import qualified Jitterpug.PRNG as PRNG
-import Jitterpug.Test.Util (approxEqList)
-import Test.Tasty (TestTree)
-import qualified Test.Tasty as Tasty
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty (TestName)
 import Test.Tasty.Hedgehog (testProperty)
 
 tests :: TestTree
 tests =
-  Tasty.testGroup
+  testGroup
     "Jitterpug.PRNG"
-    [ testProperty
-        "unit: permuteIndexWord32 matches the C version for some examples"
-        unit_permutationComparison,
-      testProperty
-        "unit: randFloat matches the C version for some examples"
-        unit_randFloatComparison,
-      testProperty
-        "prop: randFloat range"
-        prop_randFloatRange,
-      testProperty
-        "prop: permuteIndexWord32 must contain all indices"
-        prop_permuteAllIndices
+    [ prngTests "kensler PRNG" kensler
     ]
 
----- Unit tests
+prngTests :: TestName -> PRNG -> TestTree
+prngTests name prng =
+  testGroup
+    name
+    [ properties
+    ]
+  where
+    properties :: TestTree
+    properties =
+      testGroup
+        "Properties"
+        [ testProperty
+            "randFloat values are in the range [0, 1)"
+            (propRandFloatRange (randFloat prng)),
+          testProperty
+            "randFloat values are uniformly-distributed"
+            (propRandFloatUniform (randFloat prng)),
+          testProperty
+            "randPermute is a permutation (includes all required indices once)"
+            (propRandPermuteIsPermutation (randPermute prng))
+        ]
 
--- | Compare 'PRNG.permuteIndexWord32' against the C version.
---
--- We have some examples of what the C version of the @permute@ function
--- produces. This unit test compares those values against the Haskell version.
---
--- The examples used here are completely arbitrary.
-unit_permutationComparison :: Property
-unit_permutationComparison = withTests 1 $ property $ do
-  let len :: NSamples
-      len = 8
-      permIndices :: Pattern -> [Index]
-      permIndices pat =
-        PRNG.permuteIndex pat len
-          . fromIntegral
-          <$> [0 .. len - 1]
-  permIndices 0xa511e9b3 === [7, 4, 1, 6, 5, 3, 0, 2]
-  permIndices 0xa511e9b4 === [3, 1, 4, 6, 7, 2, 5, 0]
-  permIndices 0xa511e9b5 === [2, 4, 7, 5, 3, 0, 1, 6]
-  permIndices 0xa511e9b6 === [6, 0, 5, 3, 7, 2, 1, 4]
-  permIndices 0xa511e9b7 === [1, 7, 4, 6, 3, 0, 5, 2]
-  permIndices 0xa511e9b8 === [3, 6, 1, 4, 7, 5, 0, 2]
-  permIndices 0xa511e9b9 === [7, 4, 5, 2, 6, 0, 3, 1]
-  permIndices 0xa511e9ba === [3, 6, 5, 0, 2, 4, 1, 7]
-  permIndices 0xa511e9bb === [7, 4, 1, 6, 5, 3, 0, 2]
-  permIndices 0xa511e9bc === [3, 1, 4, 6, 7, 2, 5, 0]
+propRandFloatRange ::
+  (Pattern -> Index -> Float) ->
+  Property
+propRandFloatRange randFloatFn = property $ do
+  pat <- forAll $ genPattern
+  index <- forAll $ genIndex
+  let x = randFloatFn pat index
+  assert $ x >= 0
+  assert $ x < 1
 
--- | Compare 'PRNG.randFloat' against the C version.
---
--- We have some examples of what the C version of the @randfloat@ function
--- produces. This unit test compares those values against the Haskell version.
---
--- The examples used here are completely arbitrary.
-unit_randFloatComparison :: Property
-unit_randFloatComparison = withTests 1 $ property $ do
-  let n :: Index
-      n = 10
-      floats :: Pattern -> [Float]
-      floats pat = PRNG.randFloat pat <$> [0 .. (n - 1)]
-      eps :: Float
-      eps = 1e-6
-  assert $
-    approxEqList
-      eps
-      (floats 0xa399d265)
-      [ 0.204491,
-        0.951885,
-        0.436780,
-        0.436960,
-        0.824837,
-        0.467759,
-        0.307512,
-        0.940556,
-        0.175458,
-        0.899137
-      ]
-  assert $
-    approxEqList
-      eps
-      (floats 0x711ad6a5)
-      [ 0.645281,
-        0.804511,
-        0.134814,
-        0.548340,
-        0.730665,
-        0.861065,
-        0.548685,
-        0.280748,
-        0.056795,
-        0.321446
-      ]
+propRandFloatUniform ::
+  (Pattern -> Index -> Float) ->
+  Property
+propRandFloatUniform randFloatFn = withTests 10000 $ property $ do
+  pat <- forAll $ genPattern
+  index <- forAll $ genIndex
+  let x = randFloatFn pat index
+  coverUniformUnit 1 10 x
 
---- Property tests
+propRandPermuteIsPermutation ::
+  (Pattern -> Index -> NSamples -> Index -> Index) ->
+  Property
+propRandPermuteIsPermutation randPermuteFn = property $ do
+  pat <- forAll $ genPattern
+  nSamples <- forAll $ Gen.integral (Range.linear 1 1024)
+  index <- forAll $ genIndex
+  let indices = [0 .. fromIntegral (nSamples - 1)]
+      permutation = randPermuteFn pat index nSamples <$> indices
+  sort permutation === indices
 
--- | Check the range of the 'PRNG.randFloat' function.
---
--- 'PRNG.randFloat' should always return a number in the range [0, 1).
--- If we create a histogram of values (done here using `cover` from Hedgehog),
--- then the values should be distributed approximately evenly.
-prop_randFloatRange :: Property
-prop_randFloatRange = withTests 10000 $ property $ do
-  pat <- forAll $ PRNG.Pattern <$> Gen.word32 Range.linearBounded
-  idx <- forAll $ PRNG.Index <$> Gen.word32 Range.linearBounded
-  let f :: Float
-      f = PRNG.randFloat pat idx
-  assert $ f >= 0.0
-  assert $ f < 1.0
-  let minCov = 18 -- minimum coverage; close to 20%
-  cover minCov "0.0 to 0.2" (f >= 0.0 && f <= 0.2)
-  cover minCov "0.2 to 0.4" (f >= 0.2 && f <= 0.4)
-  cover minCov "0.4 to 0.6" (f >= 0.4 && f <= 0.6)
-  cover minCov "0.6 to 0.8" (f >= 0.6 && f <= 0.8)
-  cover minCov "0.8 to 1.0" (f >= 0.8 && f <= 1.0)
+genPattern :: Gen Pattern
+genPattern = Gen.enumBounded
 
--- | Permutations of all indices should contain all indices.
+genIndex :: Gen Index
+genIndex = Gen.enumBounded
+
+-- | Test that a quantity is uniformly distributed across the unit interval.
 --
--- eg. the length 8 index permutation [7, 4, 1, 6, 5, 3, 0, 2] contains all
---     indices from 0 to 7
-prop_permuteAllIndices :: Property
-prop_permuteAllIndices = property $ do
-  pat <- forAll $ fromIntegral <$> Gen.word32 Range.linearBounded
-  plen <- forAll $ fromIntegral <$> Gen.word32 (Range.linear 1 256)
-  let indices :: [Index]
-      indices = fromIntegral <$> [0 .. plen - 1]
-      permutations :: [Index]
-      permutations = PRNG.permuteIndex pat plen <$> indices
-  sort permutations === indices
+-- In this test, a quantity is histogrammed into a number of uniformly-sized
+-- buckets which divide the interval @[0, 1)@. Hedgehog coverage (the 'cover'
+-- function) is used to test that the quantity is evenly distributed. An
+-- epsilon-adjustment is supplied to allow the caller to specify the minimum
+-- difference between an even distribution and the actual distribution that
+-- is acceptable.
+coverUniformUnit ::
+  forall m n.
+  (MonadTest m, HasCallStack, Show n, Ord n, Fractional n) =>
+  -- | Epsilon offset to subtract from the expected percentage in each bucket.
+  CoverPercentage ->
+  -- | Number of buckets.
+  Word8 ->
+  -- | Current value.
+  n ->
+  -- | Resulting 'MonadTest' value.
+  m ()
+coverUniformUnit dpc nBuckets x =
+  sequence_ $ coverBucket <$> [0 .. fromIntegral $ nBuckets - 1]
+  where
+    -- percentage coverage per bucket
+    pc :: CoverPercentage
+    pc = 100 / fromIntegral nBuckets - dpc
+    -- range of values for a bucket
+    bucketRange :: Int -> (n, n)
+    bucketRange bucket = (bmin, bmax)
+      where
+        bmin, bmax :: n
+        bmin = fromIntegral bucket / fromIntegral nBuckets
+        bmax = fromIntegral (bucket + 1) / fromIntegral nBuckets
+    -- bucket range test function
+    inBucket :: Int -> Bool
+    inBucket bucket = x >= bmin && x < bmax
+      where
+        bmin, bmax :: n
+        (bmin, bmax) = bucketRange bucket
+    -- label for a bucket
+    labelBucket :: Int -> LabelName
+    labelBucket bucket = minLabel <> " <= x <= " <> maxLabel
+      where
+        bmin, bmax :: n
+        (bmin, bmax) = bucketRange bucket
+        minLabel, maxLabel :: LabelName
+        minLabel = fromString . show $ bmin
+        maxLabel = fromString . show $ bmax
+    -- bucket coverage test
+    coverBucket :: Int -> m ()
+    coverBucket bucket = cover pc (labelBucket bucket) (inBucket bucket)

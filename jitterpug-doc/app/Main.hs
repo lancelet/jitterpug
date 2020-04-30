@@ -4,8 +4,6 @@ module Main
 where
 
 import qualified Data.Text as Text
-import qualified Jitterpug.Doc.CMJPixel as CMJPixel
--- import qualified Jitterpug.Doc.Sampling as Sampling
 import qualified Tintin
 import qualified Tintin.Capabilities.Filesystem
 import qualified Tintin.Capabilities.Logging
@@ -45,9 +43,9 @@ runTintin outputDirectory = do
     (logger, filesystem, process)
 
 renderImages :: OutputDirectory -> IO ()
-renderImages outputDirectory = do
+renderImages _outputDirectory = do
+  {-
   let OutputDirectory dirTxt = outputDirectory
       dir = Text.unpack dirTxt
-  CMJPixel.render5x5Pixel (dir <> "cmj-5x5-pixel.svg")
-  CMJPixel.render5x3Pixel (dir <> "cmj-5x3-pixel.svg")
--- Sampling.renderSamplingImage (dir <> "sampling.svg")
+  -}
+  pure ()

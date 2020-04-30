@@ -29,9 +29,8 @@ common ghc-options
     -Wincomplete-uni-patterns -Wredundant-constraints
 
 library
-  import:          base, ghc-options
-  hs-source-dirs:  src
-  exposed-modules: Jitterpug.PRNG.Bench
+  import:         base, ghc-options
+  hs-source-dirs: src
   build-depends:
     , criterion
     , jitterpug

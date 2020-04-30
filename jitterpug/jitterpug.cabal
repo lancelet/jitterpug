@@ -31,31 +31,23 @@ common ghc-options
 library
   import:          base, ghc-options
   hs-source-dirs:  src
-  exposed-modules:
-    Jitterpug.CMJ
-    Jitterpug.Filter
-    Jitterpug.Geom
-    Jitterpug.ImageFn
-    Jitterpug.Imager
-    Jitterpug.PRNG
-    Jitterpug.Sampler
-    Jitterpug.Tile
-
   build-depends:
     , deepseq
     , massiv
     , vector
 
+  other-modules:
+    Jitterpug.PRNG.Kensler
+    Jitterpug.PRNG.Types
+
+  exposed-modules: Jitterpug.PRNG
+
 test-suite jitterpug-tests
   import:         base, ghc-options
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
+  other-modules:  Jitterpug.PRNG.Tests
   main-is:        Test.hs
-  other-modules:
-    Jitterpug.CMJ.Tests
-    Jitterpug.PRNG.Tests
-    Jitterpug.Test.Util
-
   build-depends:
     , hedgehog
     , jitterpug
