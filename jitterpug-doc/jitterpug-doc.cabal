@@ -31,7 +31,10 @@ common ghc-options
 library
   import:          base, ghc-options
   hs-source-dirs:  src
-  exposed-modules: Jitterpug.Doc.Grid
+  exposed-modules:
+    Jitterpug.Doc.Grid
+    Jitterpug.SampleGen.Doc
+
   build-depends:
     , Color
     , colour

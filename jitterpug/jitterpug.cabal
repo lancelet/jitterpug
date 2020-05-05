@@ -32,21 +32,29 @@ library
   import:          base, ghc-options
   hs-source-dirs:  src
   build-depends:
-    , deepseq
     , massiv
     , vector
 
   other-modules:
+    Jitterpug.Image.Types
     Jitterpug.PRNG.Kensler
     Jitterpug.PRNG.Types
+    Jitterpug.SampleGen.Types
+    Jitterpug.SampleGen.Uniform
 
-  exposed-modules: Jitterpug.PRNG
+  exposed-modules:
+    Jitterpug.Image
+    Jitterpug.PRNG
+    Jitterpug.SampleGen
 
 test-suite jitterpug-tests
   import:         base, ghc-options
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
-  other-modules:  Jitterpug.PRNG.Tests
+  other-modules:
+    Jitterpug.PRNG.Tests
+    Jitterpug.SampleGen.Tests
+
   main-is:        Test.hs
   build-depends:
     , hedgehog

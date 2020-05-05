@@ -81,8 +81,8 @@ propRandFloatUniform ::
   (Pattern -> Index -> Float) ->
   Property
 propRandFloatUniform randFloatFn = withTests 10000 $ property $ do
-  pat <- forAll $ genPattern
-  index <- forAll $ genIndex
+  pat <- forAll genPattern
+  index <- forAll genIndex
   let x = randFloatFn pat index
   coverUniformUnit 1 10 x
 
@@ -90,9 +90,9 @@ propRandPermuteIsPermutation ::
   (Pattern -> Index -> NSamples -> Index -> Index) ->
   Property
 propRandPermuteIsPermutation randPermuteFn = property $ do
-  pat <- forAll $ genPattern
+  pat <- forAll genPattern
   nSamples <- forAll $ Gen.integral (Range.linear 1 1024)
-  index <- forAll $ genIndex
+  index <- forAll genIndex
   let indices = [0 .. fromIntegral (nSamples - 1)]
       permutation = randPermuteFn pat index nSamples <$> indices
   sort permutation === indices

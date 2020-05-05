@@ -4,6 +4,7 @@ module Main
 where
 
 import qualified Jitterpug.PRNG.Tests
+import qualified Jitterpug.SampleGen.Tests
 import Test.Tasty (TestTree)
 import qualified Test.Tasty as Tasty
 
@@ -14,4 +15,6 @@ tests :: TestTree
 tests =
   Tasty.testGroup
     "Tests"
-    [Jitterpug.PRNG.Tests.tests]
+    [ Jitterpug.PRNG.Tests.tests,
+      Jitterpug.SampleGen.Tests.tests
+    ]

@@ -4,6 +4,7 @@ module Main
 where
 
 import qualified Data.Text as Text
+import qualified Jitterpug.SampleGen.Doc
 import qualified Tintin
 import qualified Tintin.Capabilities.Filesystem
 import qualified Tintin.Capabilities.Logging
@@ -43,9 +44,10 @@ runTintin outputDirectory = do
     (logger, filesystem, process)
 
 renderImages :: OutputDirectory -> IO ()
-renderImages _outputDirectory = do
-  {-
+renderImages outputDirectory = do
   let OutputDirectory dirTxt = outputDirectory
       dir = Text.unpack dirTxt
-  -}
-  pure ()
+  Jitterpug.SampleGen.Doc.renderUniformNoJitter
+    (dir <> "uniform-no-jitter.svg")
+  Jitterpug.SampleGen.Doc.renderUniformJitter
+    (dir <> "uniform-jitter.svg")
