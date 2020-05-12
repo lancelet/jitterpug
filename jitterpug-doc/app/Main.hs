@@ -28,7 +28,9 @@ main = do
   -- render out all the images
   putStrLn "Rendering images"
   renderImages outputDirectory
+  -- tell the user about locations
   putStrLn $ "Documentation was written to: " <> dir
+  putStrLn $ "Index file: " <> dir <> "/index.html"
 
 runTintin :: OutputDirectory -> IO ()
 runTintin outputDirectory = do
@@ -47,7 +49,7 @@ renderImages :: OutputDirectory -> IO ()
 renderImages outputDirectory = do
   let OutputDirectory dirTxt = outputDirectory
       dir = Text.unpack dirTxt
-  Jitterpug.SampleGen.Doc.renderUniformNoJitter
-    (dir <> "uniform-no-jitter.svg")
-  Jitterpug.SampleGen.Doc.renderUniformJitter
-    (dir <> "uniform-jitter.svg")
+  Jitterpug.SampleGen.Doc.renderUniform
+    (dir <> "samples-uniform.svg")
+  Jitterpug.SampleGen.Doc.renderStratified
+    (dir <> "samples-stratified.svg")

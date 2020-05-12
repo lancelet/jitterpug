@@ -1,52 +1,126 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 -- |
 -- Module      : Jitterpug.SampleGen
 -- Description : Sample generation.
 --
--- This module contains functions for generating samples inside a single pixel.
---
--- == Guide
---
--- To generate samples, we start with a 'SampleGen' value. In the example
--- here, we will use a 'uniform' 'SampleGen':
---
--- >>> import qualified Jitterpug.PRNG as PRNG
--- >>> smGen = uniform PRNG.kensler (mkJitter 1.0) :: SampleGen
---
--- We then configure the 'SampleGen' by indicating the 'Aspect' ratio of the
--- generated samples and the number of 'SamplesPerPixel' we wish to generate:
---
--- >>> sizedSmGen = sampleGen smGen 1 3 :: SizedSampleGen
---
--- Depending upon the sample generator that is used, the desired number of
--- samples per pixel may not exactly match the number that the generator can
--- provide. We can inspect the actual number of samples from the
--- 'SizedSampleGen' that we obtained above:
---
--- >>> spp sizedSmGen
--- SamplesPerPixel {unSamplesPerPixel = 4}
---
--- In this case, we can see that 4 samples will be generated instead of the 3
--- that we originally requested. This is because the uniform sampler must
--- produce a fixed number of samples in the x and y directions across the
--- pixel, so with an aspect ratio of 1, it generates 2x2 = 4 samples.
---
--- Finally, to generate the actual samples for a particular pixel, we use the
--- 'samplesForPixel' function:
---
--- >>> import qualified Jitterpug.Image as Image
--- >>> samples = samplesForPixel sizedSmGen (Image.Pxc 0 0)
--- >>> length samples
--- 4
--- >>> head samples
--- Smc {x = 0.43638897, y = 0.43638897}
---
--- All the samples for a particular pixel will lie inside the boundary
--- rectangle of that pixel.
+-- This module contains functions for generating samples.
 module Jitterpug.SampleGen
-  ( module Jitterpug.SampleGen.Types,
-    module Jitterpug.SampleGen.Uniform,
+  ( -- * Guide
+    -- $guide
+
+    -- * Types
+    module Jitterpug.SampleGen.Types,
+
+    -- * Functions
+
+    -- ** Sample generators
+    uniform,
+    stratified,
+
+    -- ** Utilities
+    addPattern,
+    mapPRN,
+    mapPRNSSG,
+    preComposePRN,
+    preComposePRNSSG,
   )
 where
 
+import Jitterpug.PRNG (PRN, Pattern)
+import qualified Jitterpug.PRNG as PRNG
+import Jitterpug.SampleGen.Stratified (stratified, uniform)
 import Jitterpug.SampleGen.Types
-import Jitterpug.SampleGen.Uniform
+
+-- | Add a 'Pattern' to each sample output by a generator.
+addPattern ::
+  forall f a.
+  (Traversable f) =>
+  SampleGen f a ->
+  SampleGen f (Pattern, a)
+addPattern = mapPRN (PRNG.addPattern . pure)
+
+-- | Map a pseudo-random-number effect over all generated samples.
+mapPRN ::
+  forall f a b.
+  (Traversable f) =>
+  -- | Effect to map over all values.
+  (a -> PRN b) ->
+  -- | Initial sample generator.
+  SampleGen f a ->
+  -- | Final sample generator.
+  SampleGen f b
+mapPRN fb ingen =
+  SampleGen $ \aspect n -> mapPRNSSG fb (sampleGen ingen aspect n)
+
+-- | Map a pseudo-random-number effect over all generated samples for the
+--   'SizedSampleGen'.
+mapPRNSSG ::
+  forall f a b.
+  (Traversable f) =>
+  -- | Effect to map over all values.
+  (a -> PRN b) ->
+  -- | Initial sample generator.
+  SizedSampleGen f a ->
+  -- | Final sample generator.
+  SizedSampleGen f b
+mapPRNSSG fb ingen =
+  SizedSampleGen (sampleCount ingen) (samples ingen >>= traverse fb)
+
+-- | Compose a 'PRN' action before the same generation 'PRN'.
+preComposePRN :: PRN () -> SampleGen f a -> SampleGen f a
+preComposePRN prnUnit sg =
+  SampleGen $ \aspect n -> preComposePRNSSG prnUnit (sampleGen sg aspect n)
+
+-- | Compose a 'PRN' action before the sample generation 'PRN'.
+preComposePRNSSG :: PRN () -> SizedSampleGen f a -> SizedSampleGen f a
+preComposePRNSSG prnUnit ssg =
+  SizedSampleGen
+    (sampleCount ssg)
+    (prnUnit >> samples ssg)
+
+-- $guide
+--
+-- == Generating 'Jitterpug.UV.UV' samples
+--
+-- As an example, consider the task of generating uniform 'Jitterpug.UV.UV'
+-- samples on a unit square. We start with the 'uniform' sample generator:
+--
+-- >>> import Jitterpug.UV (UV)
+-- >>> sg = uniform :: SampleGen [] UV
+--
+-- Next we have to request the number of samples we want to generate, and their
+-- aspect ratio:
+--
+-- >>> aspect = 1 :: Aspect
+-- >>> n = 8 :: SampleCount
+-- >>> ssg = sampleGen sg aspect n :: SizedSampleGen [] UV
+--
+-- The number of samples requested from a sample generator and the actual
+-- number that it is able to provide may be different. One purpose of the
+-- 'SizedSampleGen' is to resolve the actual number. We can query that number
+-- using the 'sampleCount' function:
+--
+-- >>> sampleCount ssg
+-- SampleCount {unSampleCount = 9}
+--
+-- In this case, we requested 8 samples, but the generator will produce 9,
+-- because it has to generate a rectangular number of samples. In general,
+-- the number of samples that will actually be produced is greater than or
+-- equal to the number requested.
+--
+-- To generate the samples, call the 'samples' function, and run the supplied
+-- 'PRN':
+--
+-- >>> import qualified Jitterpug.PRNG as PRNG
+-- >>> uvs = PRNG.runPRN' (PRNG.kensler 0) (samples ssg)
+--
+-- The number of samples generated should match the number we expect (9):
+--
+-- >>> length uvs
+-- 9
+--
+-- And we can inspect a couple of them:
+--
+-- >>> take 2 uvs
+-- [UV {u = 0.16666667, v = 0.16666667},UV {u = 0.5, v = 0.16666667}]

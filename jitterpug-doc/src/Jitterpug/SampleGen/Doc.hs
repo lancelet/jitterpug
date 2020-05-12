@@ -3,8 +3,8 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Jitterpug.SampleGen.Doc
-  ( renderUniformNoJitter,
-    renderUniformJitter,
+  ( renderUniform,
+    renderStratified,
   )
 where
 
@@ -34,28 +34,27 @@ import Jitterpug.Doc.Grid
     gridGeomNSubCellsX,
     gridGeomNSubCellsY,
   )
-import Jitterpug.Image (Pxc (Pxc))
-import Jitterpug.PRNG (kensler)
+import Jitterpug.Image (Imc (Imc))
+import qualified Jitterpug.Image as Image
+import qualified Jitterpug.PRNG as PRNG
+import Jitterpug.Raster (Pxc (Pxc))
 import Jitterpug.SampleGen
   ( Aspect,
-    Jitter,
+    SampleCount,
     SampleGen,
-    SamplesPerPixel,
-    Smc (Smc),
-    mkJitter,
-    sampleGen,
-    samplesForPixel,
-    uniform,
   )
+import qualified Jitterpug.SampleGen as SampleGen
+import Jitterpug.UV (UV)
 
-renderUniformNoJitter :: FilePath -> IO ()
-renderUniformNoJitter filepath = renderUniform filepath (mkJitter 0)
+renderUniform :: FilePath -> IO ()
+renderUniform filepath = renderSampleGen filepath SampleGen.uniform
 
-renderUniformJitter :: FilePath -> IO ()
-renderUniformJitter filepath = renderUniform filepath (mkJitter 0.8)
+renderStratified :: FilePath -> IO ()
+renderStratified filepath =
+  renderSampleGen filepath (SampleGen.stratified (SampleGen.mkJitter 0.7))
 
-renderUniform :: FilePath -> Jitter -> IO ()
-renderUniform filepath jitter =
+renderSampleGen :: FilePath -> SampleGen [] UV -> IO ()
+renderSampleGen filepath sguv =
   let geom :: SampleGridGeom Double
       geom = SampleGridGeom 4 4 4 3 0.03
       --
@@ -65,8 +64,8 @@ renderUniform filepath jitter =
       size :: SizeSpec Diagrams.V2 Double
       size = mkSizeSpec (Diagrams.V2 (Just 320) Nothing)
       --
-      sg :: SampleGen
-      sg = uniform kensler jitter
+      sg :: Pxc -> SampleGen [] Imc
+      sg = Image.imageSampleGen sguv
       --
       diagram :: Diagram B
       diagram = frame 0.02 (renderSamples geom style sg)
@@ -99,7 +98,7 @@ renderSamples ::
   DiaScalar n b =>
   SampleGridGeom n ->
   SampleGridStyle n b ->
-  SampleGen ->
+  (Pxc -> SampleGen [] Imc) ->
   Diagram b
 renderSamples geom style sg = sampleDots <> dgrid
   where
@@ -114,8 +113,8 @@ renderSamples geom style sg = sampleDots <> dgrid
         gridGeomNSubCellsY = nSamplesY geom
       }
     --
-    spp' :: SamplesPerPixel
-    spp' = fromIntegral (nSamplesX geom * nSamplesY geom)
+    n' :: SampleCount
+    n' = fromIntegral (nSamplesX geom * nSamplesY geom)
     --
     aspect :: Aspect
     aspect = fromIntegral (nSamplesX geom) / fromIntegral (nSamplesY geom)
@@ -127,14 +126,21 @@ renderSamples geom style sg = sampleDots <> dgrid
           i <- [0 .. fromIntegral (nPixelsX geom) - 1]
       ]
     --
-    samples :: [Smc]
-    samples = concat $ samplesForPixel (sampleGen sg aspect spp') <$> pxcs
+    samplesForPxc :: Pxc -> [Imc]
+    samplesForPxc pxc =
+      snd $
+        PRNG.runPRN
+          (PRNG.kensler 0)
+          (SampleGen.samples (SampleGen.sampleGen (sg pxc) aspect n'))
+    --
+    samples :: [Imc]
+    samples = concat $ samplesForPxc <$> pxcs
     --
     sampleDots :: Diagram b
     sampleDots = mconcat $ sampleDot <$> samples
     --
-    sampleDot :: Smc -> Diagram b
-    sampleDot (Smc x y) =
+    sampleDot :: Imc -> Diagram b
+    sampleDot (Imc x y) =
       circle (sampleRadius geom)
         # translateX (realToFrac x)
         # translateY (realToFrac y)

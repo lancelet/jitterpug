@@ -1,12 +1,11 @@
 module Jitterpug.Image.Types
-  ( Pxc (Pxc, x, y),
+  ( Imc (Imc, x, y),
   )
 where
 
--- | Coordinates of a pixel.
-data Pxc
-  = Pxc
-      { x :: {-# UNPACK #-} !Int,
-        y :: {-# UNPACK #-} !Int
+-- | Coordinates of a point within an image.
+data Imc
+  = Imc
+      { x :: {-# UNPACK #-} !Float,
+        y :: {-# UNPACK #-} !Float
       }
-  deriving (Eq, Show)

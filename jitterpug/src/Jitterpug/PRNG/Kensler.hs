@@ -1,7 +1,7 @@
 {-# OPTIONS_HADDOCK not-home #-}
 
 module Jitterpug.PRNG.Kensler
-  ( -- * Functions
+  ( -- * PRNGen Implementation
     kensler,
   )
 where
@@ -11,24 +11,88 @@ import Data.Word (Word32)
 import Jitterpug.PRNG.Types
   ( Index (Index),
     NSamples,
-    PRNG (PRNG),
-    Pattern,
+    PRNGen (PRNGen),
+    Pattern (Pattern),
+    jumpPattern,
+    nextFloat,
+    nextPattern,
+    nextPermute,
     unIndex,
     unNSamples,
     unPattern,
   )
 
--- | 'PRNG' implementation based on Kensler (2013).
+-- | 'PRNGen' implementation based on Kensler (2013).
 --
--- This 'PRNG' contains implementations of the random number generators from
+-- This 'PRNGen' contains implementations of the random number generators from
 -- the following paper:
 --
 --   * [Kensler, A](https://graphics.pixar.com/library/MultiJitteredSampling/)
 --     (2013) Correlated Multi-Jittered Sampling.
 --     Pixar Technical Memo 13-01.
-kensler :: PRNG
-kensler = PRNG randFloatKensler randPermuteKensler
-{-# INLINEABLE kensler #-}
+kensler :: Pattern -> PRNGen
+kensler = mkKensler . initState
+
+mkKensler :: State -> PRNGen
+mkKensler s = PRNGen
+  { nextFloat = nextFloatPRNGen s,
+    nextPermute = nextPermutePRNGen s,
+    nextPattern = nextPatternPRNGen s,
+    jumpPattern = jumpPatternPRNGen s
+  }
+
+data State = State {-# UNPACK #-} !Pattern {-# UNPACK #-} !Index
+
+initState :: Pattern -> State
+initState pat = State pat 0
+
+incIdx :: State -> State
+incIdx (State pat idx) = State pat (idx + 1)
+
+data Result a
+  = Result
+      { state :: {-# UNPACK #-} !State,
+        value :: !a
+      }
+
+nextResult :: State -> a -> Result a
+nextResult s = Result (incIdx s)
+
+jumpPatternPRNGen :: State -> Pattern -> PRNGen
+jumpPatternPRNGen s pat = mkKensler $ jumpPatternState s pat
+
+jumpPatternState :: State -> Pattern -> State
+jumpPatternState (State pat idx) pat' = initState pat''
+  where
+    pat'' :: Pattern
+    pat'' =
+      Pattern
+        $ randWord32Kensler pat'
+        $ Index
+        $ randWord32Kensler pat idx
+
+resultToPRNGenPair :: Result a -> (PRNGen, a)
+resultToPRNGenPair r = (mkKensler . state $ r, value r)
+
+nextFloatPRNGen :: State -> (PRNGen, Float)
+nextFloatPRNGen = resultToPRNGenPair . nextFloatResult
+
+nextPermutePRNGen :: State -> NSamples -> (PRNGen, Index -> Index)
+nextPermutePRNGen s n = resultToPRNGenPair $ nextPermuteResult s n
+
+nextPatternPRNGen :: State -> (PRNGen, Pattern)
+nextPatternPRNGen s = resultToPRNGenPair $ nextPatternResult s
+
+nextFloatResult :: State -> Result Float
+nextFloatResult s@(State pat idx) = nextResult s (randFloatKensler pat idx)
+
+nextPermuteResult :: State -> NSamples -> Result (Index -> Index)
+nextPermuteResult s@(State pat idx) nSamples =
+  nextResult s (randPermuteKensler pat idx nSamples)
+
+nextPatternResult :: State -> Result Pattern
+nextPatternResult s@(State pat idx) =
+  nextResult s (Pattern $ randWord32Kensler pat idx)
 
 randWord32Kensler ::
   Pattern ->
@@ -46,7 +110,6 @@ randWord32Kensler pat idx =
       i7 = xorsr i6 17
       i8 = i7 * (1 .|. shiftR (unPattern pat) 18)
    in i8
-{-# INLINEABLE randWord32Kensler #-}
 
 randFloatKensler ::
   Pattern ->
@@ -54,7 +117,6 @@ randFloatKensler ::
   Float
 randFloatKensler pat idx =
   fromIntegral (randWord32Kensler pat idx) / fromIntegral (maxBound :: Word32)
-{-# INLINEABLE randFloatKensler #-}
 
 randPermuteKensler ::
   Pattern ->
@@ -88,7 +150,6 @@ randPermuteKensler pat idx ns pIdx =
               then go i12
               else i12
    in Index $ (p + go (unIndex pIdx)) `mod` unNSamples ns
-{-# INLINEABLE randPermuteKensler #-}
 
 lenShift :: NSamples -> Word32
 lenShift ns =
@@ -100,8 +161,6 @@ lenShift ns =
       w4 = w3 .|. shiftR w3 8
       w5 = w4 .|. shiftR w4 16
    in w5
-{-# INLINE lenShift #-}
 
 xorsr :: Word32 -> Int -> Word32
 xorsr x n = xor x (shiftR x n)
-{-# INLINE xorsr #-}

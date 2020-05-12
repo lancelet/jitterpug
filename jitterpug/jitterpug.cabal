@@ -39,13 +39,17 @@ library
     Jitterpug.Image.Types
     Jitterpug.PRNG.Kensler
     Jitterpug.PRNG.Types
+    Jitterpug.Raster.Types
+    Jitterpug.SampleGen.Stratified
     Jitterpug.SampleGen.Types
-    Jitterpug.SampleGen.Uniform
 
   exposed-modules:
+    Jitterpug.Hashable
     Jitterpug.Image
     Jitterpug.PRNG
+    Jitterpug.Raster
     Jitterpug.SampleGen
+    Jitterpug.UV
 
 test-suite jitterpug-tests
   import:         base, ghc-options
@@ -54,14 +58,17 @@ test-suite jitterpug-tests
   other-modules:
     Jitterpug.PRNG.Tests
     Jitterpug.SampleGen.Tests
+    Jitterpug.Test.Histogram
 
   main-is:        Test.hs
   build-depends:
+    , extra
     , hedgehog
     , jitterpug
-    , linear
+    , primitive
     , tasty
     , tasty-hedgehog
+    , vector
 
 test-suite jitterpug-doctests
   import:         base, ghc-options

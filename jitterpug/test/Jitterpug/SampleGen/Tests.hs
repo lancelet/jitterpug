@@ -1,5 +1,6 @@
 {-# LANGUAGE NegativeLiterals #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Jitterpug.SampleGen.Tests
   ( tests,
@@ -9,22 +10,17 @@ where
 import Hedgehog ((===), Gen, Property, annotateShow, assert, forAll, property)
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
-import Jitterpug.Image (Pxc (Pxc))
-import qualified Jitterpug.Image as Image
-import Jitterpug.PRNG (kensler)
+import qualified Jitterpug.PRNG as PRNG
+import Jitterpug.PRNG.Tests (genKensler)
 import Jitterpug.SampleGen
-  ( Aspect (Aspect),
+  ( Aspect,
+    SampleCount,
     SampleGen,
-    SamplesPerPixel (SamplesPerPixel),
     SizedSampleGen,
-    Smc (Smc),
-    mkJitter,
-    sampleGen,
-    samplesForPixel,
-    spp,
-    unSamplesPerPixel,
-    uniform,
   )
+import qualified Jitterpug.SampleGen as SampleGen
+import Jitterpug.UV (UV)
+import qualified Jitterpug.UV as UV
 import Test.Tasty (TestName, TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
 
@@ -32,13 +28,22 @@ tests :: TestTree
 tests =
   testGroup
     "Jitterpug.SampleGen"
-    [ sampleGenTests "Uniform" uniformSampleGen
+    [ sampleGenTests "Uniform" uniformSampleGen,
+      sampleGenTests "Stratified" stratifiedSampleGen
     ]
 
-uniformSampleGen :: SampleGen
-uniformSampleGen = uniform kensler (mkJitter 0.99)
+uniformSampleGen :: SampleGen [] UV
+uniformSampleGen = SampleGen.uniform
 
-sampleGenTests :: TestName -> SampleGen -> TestTree
+stratifiedSampleGen :: SampleGen [] UV
+stratifiedSampleGen = SampleGen.stratified (SampleGen.mkJitter 1)
+
+sampleGenTests ::
+  forall f.
+  (Foldable f, Show (f UV)) =>
+  TestName ->
+  SampleGen f UV ->
+  TestTree
 sampleGenTests name sg =
   testGroup
     name
@@ -56,47 +61,42 @@ sampleGenTests name sg =
             (propPixelContainsAllSamples sg)
         ]
 
-propMinSampleCount :: SampleGen -> Property
+propMinSampleCount ::
+  forall f.
+  (Foldable f) =>
+  SampleGen f UV ->
+  Property
 propMinSampleCount sg = property $ do
   aspect <- forAll genAspect
-  spp' <- forAll genSamplesPerPixel
-  let sized :: SizedSampleGen
-      sized = sampleGen sg aspect spp'
-  assert $ spp sized >= spp'
-  pxc <- forAll genPxc
-  let samples :: [Smc]
-      samples = samplesForPixel sized pxc
-  (fromIntegral . unSamplesPerPixel . spp) sized === length samples
+  n <- forAll genSampleCount
+  prnGen <- forAll genKensler
+  let sized :: SizedSampleGen f UV
+      sized = SampleGen.sampleGen sg aspect n
+  assert $ SampleGen.sampleCount sized >= n
+  let samples :: f UV
+      samples = PRNG.runPRN' prnGen $ SampleGen.samples $ sized
+  (fromIntegral . SampleGen.unSampleCount . SampleGen.sampleCount) sized === length samples
 
-propPixelContainsAllSamples :: SampleGen -> Property
+propPixelContainsAllSamples ::
+  forall f.
+  (Foldable f, Show (f UV)) =>
+  SampleGen f UV ->
+  Property
 propPixelContainsAllSamples sg = property $ do
   aspect <- forAll genAspect
-  spp' <- forAll genSamplesPerPixel
-  pxc <- forAll genPxc
-  let samples :: [Smc]
-      samples = samplesForPixel (sampleGen sg aspect spp') pxc
-      --
-      sampleInPixel :: Smc -> Bool
-      sampleInPixel (Smc x y) =
-        x >= xf
-          && y >= yf
-          && x <= (xf + 1)
-          && y <= (yf + 1)
-        where
-          xf, yf :: Float
-          xf = fromIntegral (Image.x pxc)
-          yf = fromIntegral (Image.y pxc)
+  n <- forAll genSampleCount
+  prnGen <- forAll genKensler
+  let samples :: f UV
+      samples =
+        PRNG.runPRN' prnGen
+          $ SampleGen.samples
+          $ SampleGen.sampleGen sg aspect n
+  --
   annotateShow samples
-  assert $ all sampleInPixel samples
+  assert $ all UV.inUnitSquare samples
 
 genAspect :: Gen Aspect
-genAspect = Aspect <$> Gen.float (Range.linearFrac 0.1 10.0)
+genAspect = SampleGen.Aspect <$> Gen.float (Range.linearFrac 0.1 10.0)
 
-genSamplesPerPixel :: Gen SamplesPerPixel
-genSamplesPerPixel = SamplesPerPixel <$> Gen.word16 (Range.linear 1 200)
-
-genPxc :: Gen Pxc
-genPxc =
-  Pxc
-    <$> Gen.int (Range.linear -10000 10000)
-    <*> Gen.int (Range.linear -10000 10000)
+genSampleCount :: Gen SampleCount
+genSampleCount = SampleGen.SampleCount <$> Gen.word16 (Range.linear 1 200)

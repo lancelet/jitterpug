@@ -1,30 +1,22 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Jitterpug.SampleGen.Types
-  ( -- * Types
-    Smc (Smc, x, y),
+  ( -- ** Types
     Aspect (Aspect, unAspect),
     Jitter (UseJitter, NoJitter),
     JitterCoeff (unJitterCoeff),
-    SamplesPerPixel (SamplesPerPixel, unSamplesPerPixel),
+    SampleCount (SampleCount, unSampleCount),
     SampleGen (SampleGen, sampleGen),
-    SizedSampleGen (SizedSampleGen, spp, samplesForPixel),
+    SizedSampleGen (SizedSampleGen, sampleCount, samples),
 
-    -- * Functions
+    -- ** Smart constructors
     mkJitter,
   )
 where
 
 import Data.Word (Word16)
-import Jitterpug.Image.Types (Pxc)
-
--- | Sample coordinates.
-data Smc
-  = Smc
-      { x :: {-# UNPACK #-} !Float,
-        y :: {-# UNPACK #-} !Float
-      }
-  deriving (Eq, Show)
+import Jitterpug.PRNG (PRN)
 
 -- | Aspect ratio of sample generation.
 --
@@ -63,25 +55,31 @@ mkJitterCoeff :: Float -> JitterCoeff
 mkJitterCoeff = JitterCoeff . clamp 0.0 1.0
 {-# INLINE mkJitterCoeff #-}
 
--- | Number of samples per pixel.
-newtype SamplesPerPixel = SamplesPerPixel {unSamplesPerPixel :: Word16}
+-- | Number of samples to generate.
+newtype SampleCount = SampleCount {unSampleCount :: Word16}
   deriving (Show, Eq, Ord, Num, Real, Enum, Integral, Bounded)
 
--- | Generator of sample coordinates for a pixel.
-newtype SampleGen
+-- | Generator of samples.
+newtype SampleGen f a
   = SampleGen
       { -- | Produces a sample generator with a known size.
-        sampleGen :: Aspect -> SamplesPerPixel -> SizedSampleGen
+        sampleGen :: Aspect -> SampleCount -> SizedSampleGen f a
       }
 
+instance Functor f => Functor (SampleGen f) where
+  fmap f sg = SampleGen $ \aspect n -> f <$> sampleGen sg aspect n
+
 -- | Sample generator that is fixed to a particular number of samples.
-data SizedSampleGen
+data SizedSampleGen f a
   = SizedSampleGen
       { -- | Number of samples per pixel (final).
-        spp :: SamplesPerPixel,
-        -- | Generate the samples for a single pixel.
-        samplesForPixel :: Pxc -> [Smc]
+        sampleCount :: SampleCount,
+        -- | Pseudo-random generator for the samples.
+        samples :: PRN (f a)
       }
+
+instance Functor f => Functor (SizedSampleGen f) where
+  fmap f ssg = SizedSampleGen (sampleCount ssg) (fmap f <$> samples ssg)
 
 -- | Clamp a value between a minimum and maximum value.
 clamp ::
