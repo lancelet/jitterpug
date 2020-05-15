@@ -60,25 +60,25 @@ newtype SampleCount = SampleCount {unSampleCount :: Word16}
   deriving (Show, Eq, Ord, Num, Real, Enum, Integral, Bounded)
 
 -- | Generator of samples.
-newtype SampleGen f a
+newtype SampleGen a
   = SampleGen
       { -- | Produces a sample generator with a known size.
-        sampleGen :: Aspect -> SampleCount -> SizedSampleGen f a
+        sampleGen :: Aspect -> SampleCount -> SizedSampleGen a
       }
 
-instance Functor f => Functor (SampleGen f) where
+instance Functor SampleGen where
   fmap f sg = SampleGen $ \aspect n -> f <$> sampleGen sg aspect n
 
 -- | Sample generator that is fixed to a particular number of samples.
-data SizedSampleGen f a
+data SizedSampleGen a
   = SizedSampleGen
       { -- | Number of samples per pixel (final).
         sampleCount :: SampleCount,
         -- | Pseudo-random generator for the samples.
-        samples :: PRN (f a)
+        samples :: PRN [a]
       }
 
-instance Functor f => Functor (SizedSampleGen f) where
+instance Functor SizedSampleGen where
   fmap f ssg = SizedSampleGen (sampleCount ssg) (fmap f <$> samples ssg)
 
 -- | Clamp a value between a minimum and maximum value.

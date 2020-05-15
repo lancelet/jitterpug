@@ -53,7 +53,7 @@ renderStratified :: FilePath -> IO ()
 renderStratified filepath =
   renderSampleGen filepath (SampleGen.stratified (SampleGen.mkJitter 0.7))
 
-renderSampleGen :: FilePath -> SampleGen [] UV -> IO ()
+renderSampleGen :: FilePath -> SampleGen UV -> IO ()
 renderSampleGen filepath sguv =
   let geom :: SampleGridGeom Double
       geom = SampleGridGeom 4 4 4 3 0.03
@@ -64,7 +64,7 @@ renderSampleGen filepath sguv =
       size :: SizeSpec Diagrams.V2 Double
       size = mkSizeSpec (Diagrams.V2 (Just 320) Nothing)
       --
-      sg :: Pxc -> SampleGen [] Imc
+      sg :: Pxc -> SampleGen Imc
       sg = Image.imageSampleGen sguv
       --
       diagram :: Diagram B
@@ -98,7 +98,7 @@ renderSamples ::
   DiaScalar n b =>
   SampleGridGeom n ->
   SampleGridStyle n b ->
-  (Pxc -> SampleGen [] Imc) ->
+  (Pxc -> SampleGen Imc) ->
   Diagram b
 renderSamples geom style sg = sampleDots <> dgrid
   where

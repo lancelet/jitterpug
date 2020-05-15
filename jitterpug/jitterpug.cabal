@@ -40,6 +40,7 @@ library
     Jitterpug.PRNG.Kensler
     Jitterpug.PRNG.Types
     Jitterpug.Raster.Types
+    Jitterpug.SampleBucket.Types
     Jitterpug.SampleGen.Stratified
     Jitterpug.SampleGen.Types
 
@@ -48,6 +49,7 @@ library
     Jitterpug.Image
     Jitterpug.PRNG
     Jitterpug.Raster
+    Jitterpug.SampleBucket
     Jitterpug.SampleGen
     Jitterpug.UV
 

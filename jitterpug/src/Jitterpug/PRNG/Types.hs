@@ -65,9 +65,9 @@ instance Applicative PRN where
       )
 
 instance Monad PRN where
-  ma >>= amb =
+  ma >>= fmb =
     PRN
       ( \gen ->
           let (gen', a) = unPRN ma gen
-           in unPRN (amb a) gen'
+           in unPRN (fmb a) gen'
       )

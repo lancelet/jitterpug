@@ -23,7 +23,7 @@ import Jitterpug.SampleGen.Types
 import Jitterpug.UV (UV (UV))
 
 -- | Uniform sample generator.
-uniform :: SampleGen [] UV
+uniform :: SampleGen UV
 uniform = stratified NoJitter
 
 -- | Stratified sample generator.
@@ -31,11 +31,11 @@ stratified ::
   -- | Jitter amount.
   Jitter ->
   -- | Sample generator.
-  SampleGen [] UV
+  SampleGen UV
 stratified jitter = SampleGen (stratifiedSized jitter)
 
 -- | Create a uniform sized sample generator.
-stratifiedSized :: Jitter -> Aspect -> SampleCount -> SizedSampleGen [] UV
+stratifiedSized :: Jitter -> Aspect -> SampleCount -> SizedSampleGen UV
 stratifiedSized jitter aspect n =
   SizedSampleGen n' (samplesForUnitSquare jitter counts)
   where

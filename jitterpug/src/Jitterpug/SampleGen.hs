@@ -34,46 +34,43 @@ import Jitterpug.SampleGen.Types
 
 -- | Add a 'Pattern' to each sample output by a generator.
 addPattern ::
-  forall f a.
-  (Traversable f) =>
-  SampleGen f a ->
-  SampleGen f (Pattern, a)
+  forall a.
+  SampleGen a ->
+  SampleGen (Pattern, a)
 addPattern = mapPRN (PRNG.addPattern . pure)
 
 -- | Map a pseudo-random-number effect over all generated samples.
 mapPRN ::
-  forall f a b.
-  (Traversable f) =>
+  forall a b.
   -- | Effect to map over all values.
   (a -> PRN b) ->
   -- | Initial sample generator.
-  SampleGen f a ->
+  SampleGen a ->
   -- | Final sample generator.
-  SampleGen f b
+  SampleGen b
 mapPRN fb ingen =
   SampleGen $ \aspect n -> mapPRNSSG fb (sampleGen ingen aspect n)
 
 -- | Map a pseudo-random-number effect over all generated samples for the
 --   'SizedSampleGen'.
 mapPRNSSG ::
-  forall f a b.
-  (Traversable f) =>
+  forall a b.
   -- | Effect to map over all values.
   (a -> PRN b) ->
   -- | Initial sample generator.
-  SizedSampleGen f a ->
+  SizedSampleGen a ->
   -- | Final sample generator.
-  SizedSampleGen f b
+  SizedSampleGen b
 mapPRNSSG fb ingen =
   SizedSampleGen (sampleCount ingen) (samples ingen >>= traverse fb)
 
 -- | Compose a 'PRN' action before the same generation 'PRN'.
-preComposePRN :: PRN () -> SampleGen f a -> SampleGen f a
+preComposePRN :: PRN () -> SampleGen a -> SampleGen a
 preComposePRN prnUnit sg =
   SampleGen $ \aspect n -> preComposePRNSSG prnUnit (sampleGen sg aspect n)
 
 -- | Compose a 'PRN' action before the sample generation 'PRN'.
-preComposePRNSSG :: PRN () -> SizedSampleGen f a -> SizedSampleGen f a
+preComposePRNSSG :: PRN () -> SizedSampleGen a -> SizedSampleGen a
 preComposePRNSSG prnUnit ssg =
   SizedSampleGen
     (sampleCount ssg)

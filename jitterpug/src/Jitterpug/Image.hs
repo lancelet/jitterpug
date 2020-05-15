@@ -26,6 +26,6 @@ uvToImc pxc uv =
 -- This function pre-composes a 'PRN' jump based on the pixel coordinates, and
 -- converts UV coordinates to pixel coordinates, offsetting them by the pixel
 -- coordinates.
-imageSampleGen :: (Functor f) => SampleGen f UV -> Pxc -> SampleGen f Imc
+imageSampleGen :: SampleGen UV -> Pxc -> SampleGen Imc
 imageSampleGen sg pxc =
   uvToImc pxc <$> SampleGen.preComposePRN (PRNG.jump pxc) sg

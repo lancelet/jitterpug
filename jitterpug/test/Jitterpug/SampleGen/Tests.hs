@@ -32,17 +32,15 @@ tests =
       sampleGenTests "Stratified" stratifiedSampleGen
     ]
 
-uniformSampleGen :: SampleGen [] UV
+uniformSampleGen :: SampleGen UV
 uniformSampleGen = SampleGen.uniform
 
-stratifiedSampleGen :: SampleGen [] UV
+stratifiedSampleGen :: SampleGen UV
 stratifiedSampleGen = SampleGen.stratified (SampleGen.mkJitter 1)
 
 sampleGenTests ::
-  forall f.
-  (Foldable f, Show (f UV)) =>
   TestName ->
-  SampleGen f UV ->
+  SampleGen UV ->
   TestTree
 sampleGenTests name sg =
   testGroup
@@ -62,31 +60,27 @@ sampleGenTests name sg =
         ]
 
 propMinSampleCount ::
-  forall f.
-  (Foldable f) =>
-  SampleGen f UV ->
+  SampleGen UV ->
   Property
 propMinSampleCount sg = property $ do
   aspect <- forAll genAspect
   n <- forAll genSampleCount
   prnGen <- forAll genKensler
-  let sized :: SizedSampleGen f UV
+  let sized :: SizedSampleGen UV
       sized = SampleGen.sampleGen sg aspect n
   assert $ SampleGen.sampleCount sized >= n
-  let samples :: f UV
+  let samples :: [UV]
       samples = PRNG.runPRN' prnGen $ SampleGen.samples $ sized
   (fromIntegral . SampleGen.unSampleCount . SampleGen.sampleCount) sized === length samples
 
 propPixelContainsAllSamples ::
-  forall f.
-  (Foldable f, Show (f UV)) =>
-  SampleGen f UV ->
+  SampleGen UV ->
   Property
 propPixelContainsAllSamples sg = property $ do
   aspect <- forAll genAspect
   n <- forAll genSampleCount
   prnGen <- forAll genKensler
-  let samples :: f UV
+  let samples :: [UV]
       samples =
         PRNG.runPRN' prnGen
           $ SampleGen.samples
